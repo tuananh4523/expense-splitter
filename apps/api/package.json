@@ -1,0 +1,35 @@
+{
+  "name": "@expense/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ./node_modules/tsx/dist/cli.mjs watch src/index.ts",
+    "build": "tsc --project tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "@expense/database": "workspace:*",
+    "@expense/types": "workspace:*",
+    "@hono/node-server": "^1.14.0",
+    "hono": "^4.12.8",
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "ioredis": "^5.4.2",
+    "minio": "^8.0.4",
+    "resend": "^4.2.0",
+    "socket.io": "^4.8.1",
+    "strnum": "^2.2.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@expense/config": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

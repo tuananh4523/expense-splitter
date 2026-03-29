@@ -1,0 +1,95 @@
+/**
+ * Bảng màu WordPress admin (5 màu gốc) + biến semantic cho app.
+ * Charcoal #1d2327, Slate #2c3338, Blue #0073aa, BG #f0f0f1, Orange #d54e21
+ */
+:root {
+  /* WordPress gốc */
+  --wp-charcoal: #1d2327;
+  --wp-slate: #2c3338;
+  --wp-blue: #0073aa;
+  --wp-blue-dark: #005a87;
+  --wp-bg: #f0f0f1;
+  --wp-orange: #d54e21;
+  /* Viền kiểu WP admin (trên nền sáng) */
+  --wp-border: #c3c4c7;
+  --wp-border-strong: #a7aaad;
+  --wp-border-light: #dcdcde;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --color-brand: var(--wp-blue);
+  --color-brand-soft: #e5f4fa;
+  --color-brand-text: var(--wp-blue-dark);
+  --color-accent: var(--wp-orange);
+
+  --color-text: var(--wp-charcoal);
+  --color-text-secondary: var(--wp-slate);
+  --color-text-muted: #646970;
+  --color-text-hint: #8c8f94;
+
+  --color-bg-page: var(--wp-bg);
+  --color-surface: #ffffff;
+  --color-border: var(--wp-border);
+  --color-border-strong: var(--wp-border-strong);
+  --color-border-light: var(--wp-border-light);
+
+  /* Semantic (gần WP 6+) */
+  --color-success: #00a32a;
+  --color-success-soft: #edfaef;
+  --color-warning: var(--wp-orange);
+  --color-warning-soft: #fcf9e8;
+  --color-danger: #d63638;
+  --color-danger-soft: #fcf0f1;
+  --color-info: var(--wp-blue);
+  --color-info-soft: var(--color-brand-soft);
+
+  --page-padding-x: 24px;
+  --page-padding-x-sm: 16px;
+  --page-max-width: 1200px;
+  --page-header-mb: 24px;
+
+  --card-padding: 24px;
+  --card-padding-sm: 16px;
+  --card-radius: 12px;
+  --card-border: 1px solid var(--color-border);
+
+  --shadow-sm: 0 2px 6px rgba(29, 35, 39, 0.08);
+  --shadow-md: 0 6px 18px rgba(29, 35, 39, 0.12);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  --table-header-height: 40px;
+  --table-row-height: 52px;
+
+  --form-label-mb: 6px;
+  --form-item-mb: 20px;
+  --input-height: 40px;
+  --input-height-lg: 48px;
+
+  /* Sidebar / drawer — ghi đè theo [data-theme] trong themes.css */
+  --sidebar-bg: #1d2327;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #f0f0f1;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(0, 115, 170, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #8c8f94;
+  --sidebar-arrow: #8c8f94;
+  --drawer-head-bg: #1d2327;
+  --drawer-body-bg: #1d2327;
+}

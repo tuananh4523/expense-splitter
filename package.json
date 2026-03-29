@@ -1,0 +1,37 @@
+{
+  "name": "expense-splitter",
+  "version": "1.0.0",
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev:api": "pnpm --filter @expense/api dev",
+    "dev:web": "pnpm --filter @expense/web dev",
+    "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
+    "check": "biome check --write .",
+    "typecheck": "pnpm -r typecheck",
+    "db:migrate": "pnpm --filter @expense/database migrate",
+    "db:migrate:deploy": "pnpm --filter @expense/database migrate:deploy",
+    "db:generate": "pnpm --filter @expense/database generate",
+    "db:seed": "pnpm --filter @expense/database seed",
+    "db:studio": "pnpm --filter @expense/database studio"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3"
+  }
+}

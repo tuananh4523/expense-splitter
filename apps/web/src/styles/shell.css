@@ -1,0 +1,175 @@
+/**
+ * Không chứa Tailwind — import TRƯỚC globals.css trong _app.
+ * Giúp biến, body, #__next và layout sidebar (FOUC) áp dụng ngay, không chờ parse chunk Tailwind.
+ */
+:root {
+  /* Biến từ next/font trên <Html> (_document) — shadow/radius đồng bộ tokens.css (import sau trong globals). */
+  --font-primary: var(--font-be-vietnam-pro), "Be Vietnam Pro", sans-serif;
+  --sidebar-width: 256px;
+  --header-height: 64px;
+  --color-brand: #0073aa;
+  --color-surface: #ffffff;
+  --color-bg: #f0f0f1;
+  --color-text: #1d2327;
+  --color-muted: #646970;
+  --color-border: #c3c4c7;
+  --shadow-sm: 0 2px 6px rgba(29, 35, 39, 0.08);
+  --shadow-md: 0 6px 18px rgba(29, 35, 39, 0.12);
+  --radius: 10px;
+  --radius-lg: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-primary);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#__next {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/*
+ * Script trong _document: localStorage sidebar thu gọn → class trước paint đầu.
+ */
+html.layout-shell-collapsed .app-sider.ant-layout-sider {
+  flex: 0 0 80px !important;
+  max-width: 80px !important;
+  min-width: 80px !important;
+  width: 80px !important;
+}
+
+html.layout-shell-collapsed .app-main-inner {
+  margin-left: 80px !important;
+  transition: none !important;
+}
+
+html.layout-shell-collapsed .app-sider-brand {
+  flex-direction: row !important;
+  justify-content: center !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+html.layout-shell-collapsed .app-sider-brand-text {
+  display: none !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item-disabled:has(.sidebar-section-label) {
+  display: none !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item .ant-menu-title-content,
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content {
+  display: none !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  display: none !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item-divider {
+  margin: 6px 12px !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu.ant-menu-inline-collapsed li.ant-menu-item-disabled:has(.sidebar-section-label) {
+  display: none !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-item-divider {
+  margin: 6px 12px !important;
+}
+
+html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-submenu > .ant-menu-submenu-title {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+}
+
+/* Nút góp ý nổi — góc phải dưới */
+.feedback-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 200;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand, #0073aa);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease;
+}
+
+.feedback-fab:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.feedback-fab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-brand, #0073aa) 55%, #ffffff);
+  outline-offset: 3px;
+}
+
+/* Admin — bảng góp ý: dòng mở rộng full width; sao một hàng */
+.admin-feedback-table .admin-feedback-expanded-row > .ant-table-cell {
+  padding: 0 !important;
+  background: var(--color-bg, #f0f0f1) !important;
+  border-bottom: 1px solid var(--color-border, #c3c4c7) !important;
+}
+
+.admin-feedback-table .admin-feedback-detail {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+.admin-feedback-rate-cell .ant-rate {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+}
+
+.admin-feedback-rate-cell .ant-rate-star {
+  margin-inline-end: 2px !important;
+}
+
+.admin-feedback-rate-cell .ant-rate-star:last-child {
+  margin-inline-end: 0 !important;
+}
+
+/* Admin — góp ý: màu nền dòng theo trạng thái */
+.admin-feedback-table tbody > tr.admin-feedback-row--new > td {
+  background: #fffbeb !important;
+}
+.admin-feedback-table tbody > tr.admin-feedback-row--in-progress > td {
+  background: #eff6ff !important;
+}
+.admin-feedback-table tbody > tr.admin-feedback-row--resolved > td {
+  background: #ecfdf5 !important;
+}
+.admin-feedback-table tbody > tr.admin-feedback-row--archived > td {
+  background: #f5f5f4 !important;
+}
+.admin-feedback-table tbody > tr.admin-feedback-row--new:hover > td,
+.admin-feedback-table tbody > tr.admin-feedback-row--in-progress:hover > td,
+.admin-feedback-table tbody > tr.admin-feedback-row--resolved:hover > td,
+.admin-feedback-table tbody > tr.admin-feedback-row--archived:hover > td {
+  filter: brightness(0.97);
+}

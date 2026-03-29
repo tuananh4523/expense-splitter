@@ -1,0 +1,588 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum GroupRole {
+  LEADER
+  VICE_LEADER
+  MEMBER
+}
+
+enum SplitType {
+  EQUAL
+  UNEQUAL
+  PERCENTAGE
+}
+
+enum ExpenseStatus {
+  ACTIVE
+  SETTLED
+  STANDALONE_DONE
+}
+
+enum SettlementStatus {
+  DRAFT
+  PENDING
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  ACCEPTED
+  REJECTED
+}
+
+enum NotificationType {
+  SETTLEMENT_CREATED
+  PAYMENT_REQUEST
+  PAYMENT_CONFIRMED
+  PAYMENT_ACCEPTED
+  PAYMENT_REJECTED
+  FUND_CONTRIBUTED
+  FUND_LOW_BALANCE
+  MEMBER_JOINED
+  MEMBER_LEFT
+  EXPENSE_ADDED
+  STANDALONE_REQUESTED
+  GROUP_INVITE
+  /** Thông báo toàn hệ thống từ quản trị (một broadcastId chung cho mọi user nhận). */
+  SYSTEM_ANNOUNCEMENT
+}
+
+enum GroupInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum FeedbackType {
+  PRAISE
+  ISSUE
+}
+
+enum FeedbackStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
+
+enum FundTransactionType {
+  CONTRIBUTE
+  DEDUCT
+  REFUND
+}
+
+enum FundContributionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ═══════════════════════════════════════════
+// USER
+// ═══════════════════════════════════════════
+
+model User {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  name                   String
+  avatarUrl              String?
+  passwordHash           String
+  role                   Role      @default(USER)
+  isActive               Boolean   @default(true)
+  lastLoginAt            DateTime?
+  passwordResetToken     String?   @unique
+  passwordResetExpires   DateTime?
+  mustChangePassword     Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  profile       UserProfile?
+  memberships   GroupMember[]
+  paidExpenses      Expense[]         @relation("ExpensePayer")
+  splits            ExpenseSplit[]
+  comments          Comment[]
+  notifications     Notification[]
+  fundContributions      FundTransaction[] @relation("FundContributor")
+  reviewedFundContributions FundTransaction[] @relation("FundContributionReviewer")
+  paymentsSent      PaymentRecord[]   @relation("PaymentSender")
+  paymentsReceived  PaymentRecord[]   @relation("PaymentReceiver")
+  auditLogs         AuditLog[]
+  groupInvitesReceived GroupInvite[]  @relation("GroupInviteInvitee")
+  groupInvitesSent     GroupInvite[]  @relation("GroupInviteInviter")
+  feedbacks            Feedback[]
+  sessions             UserSession[]
+
+  @@index([email])
+}
+
+model UserSession {
+  id          String   @id @default(cuid())
+  userId      String
+  jti         String   @unique
+  deviceLabel String?
+  userAgent   String?  @db.VarChar(512)
+  ipAddress   String?  @db.VarChar(64)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  bio       String?
+  phone     String?
+  /** Bảng màu giao diện (id theme UI, ví dụ fresh, ocean) */
+  uiTheme   String   @default("fresh")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccounts BankAccount[]
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  profileId     String
+  bankCode      String
+  bankName      String
+  accountNumber String
+  accountName   String
+  /** URL lưu trữ ảnh mã QR (cùng định dạng viewUrl MinIO như avatar). */
+  qrImageUrl    String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profile UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// ═══════════════════════════════════════════
+// CATEGORY
+// ═══════════════════════════════════════════
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  icon      String?
+  color     String?
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses Expense[]
+
+  @@index([name])
+}
+
+// ═══════════════════════════════════════════
+// GROUP
+// ═══════════════════════════════════════════
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  avatarUrl   String?
+  icon        String?
+  color       String?
+  inviteCode    String    @unique @default(cuid())
+  inviteEnabled Boolean   @default(true)
+  inviteExpires DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+  fund         GroupFund?
+  auditLogs    AuditLog[]
+  activityLogs GroupActivityLog[]
+  invites      GroupInvite[]
+
+  @@index([inviteCode])
+}
+
+model GroupInvite {
+  id              String            @id @default(cuid())
+  groupId         String
+  inviteeUserId   String
+  invitedByUserId String
+  status          GroupInviteStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitee User  @relation("GroupInviteInvitee", fields: [inviteeUserId], references: [id], onDelete: Cascade)
+  inviter User  @relation("GroupInviteInviter", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, status])
+  @@index([inviteeUserId, status])
+}
+
+model GroupMember {
+  id        String    @id @default(cuid())
+  groupId   String
+  userId    String
+  role      GroupRole @default(MEMBER)
+  nickname  String?
+  isActive  Boolean   @default(true)
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════
+// EXPENSE
+// ═══════════════════════════════════════════
+
+model Expense {
+  id           String        @id @default(cuid())
+  groupId      String
+  categoryId   String?
+  paidByUserId String
+  title        String
+  description  String?
+  amount       Decimal       @db.Decimal(12, 2)
+  currency     String        @default("VND")
+  splitType    SplitType     @default(EQUAL)
+  status       ExpenseStatus @default(ACTIVE)
+  isStandalone Boolean       @default(false)
+  expenseDate  DateTime      @default(now())
+  tags         String[]      @default([])
+  imageUrls    String[]      @default([])
+  /** Đợt tổng kết (PENDING) đang khóa chi này; chi mới sau khi tạo đợt = null → không thuộc đợt cũ */
+  settlementId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  group             Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  category          Category?          @relation(fields: [categoryId], references: [id])
+  paidBy            User               @relation("ExpensePayer", fields: [paidByUserId], references: [id])
+  settlement        Settlement?        @relation(fields: [settlementId], references: [id], onDelete: SetNull)
+  splits            ExpenseSplit[]
+  comments          Comment[]
+  recurringRule     RecurringExpense?
+  standalonePayment StandalonePayment?
+  auditLogs         AuditLog[]
+
+  @@index([groupId])
+  @@index([paidByUserId])
+  @@index([categoryId])
+  @@index([expenseDate])
+  @@index([status])
+  @@index([groupId, status])
+  @@index([groupId, expenseDate])
+  @@index([settlementId])
+}
+
+model ExpenseSplit {
+  id         String   @id @default(cuid())
+  expenseId  String
+  userId     String
+  amount     Decimal  @db.Decimal(12, 2)
+  percentage Decimal? @db.Decimal(5, 2)
+  isExcluded Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+  @@index([expenseId])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════
+// RECURRING EXPENSE
+// ═══════════════════════════════════════════
+
+model RecurringExpense {
+  id           String   @id @default(cuid())
+  expenseId    String   @unique
+  intervalDays Int
+  nextRunAt    DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+}
+
+// ═══════════════════════════════════════════
+// STANDALONE PAYMENT (khoản chi riêng lẻ)
+// ═══════════════════════════════════════════
+
+model StandalonePayment {
+  id          String        @id @default(cuid())
+  expenseId   String        @unique
+  requestedAt DateTime      @default(now())
+  completedAt DateTime?
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  expense        Expense         @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  paymentRecords PaymentRecord[]
+}
+
+// ═══════════════════════════════════════════
+// SETTLEMENT (Tổng kết)
+// ═══════════════════════════════════════════
+
+model Settlement {
+  id             String           @id @default(cuid())
+  groupId        String
+  title          String
+  periodStart    DateTime
+  periodEnd      DateTime
+  receiverUserId String
+  totalAmount    Decimal          @db.Decimal(12, 2)
+  status         SettlementStatus @default(DRAFT)
+  summaryData    Json
+  completedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  group          Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paymentRecords PaymentRecord[]
+  notifications  Notification[]
+  linkedExpenses Expense[]
+
+  @@index([groupId])
+  @@index([receiverUserId])
+  @@index([status])
+  @@index([groupId, periodStart, periodEnd])
+}
+
+model PaymentRecord {
+  id                  String        @id @default(cuid())
+  settlementId        String?
+  standalonePaymentId String?
+  payerUserId         String
+  receiverUserId      String
+  amount              Decimal       @db.Decimal(12, 2)
+  status              PaymentStatus @default(PENDING)
+  proofImageUrls      String[]      @default([])
+  payerComment        String?
+  leaderComment       String?
+  confirmedAt         DateTime?
+  acceptedAt          DateTime?
+  rejectedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  settlement        Settlement?        @relation(fields: [settlementId], references: [id])
+  standalonePayment StandalonePayment? @relation(fields: [standalonePaymentId], references: [id])
+  payer             User               @relation("PaymentSender", fields: [payerUserId], references: [id])
+  receiver          User               @relation("PaymentReceiver", fields: [receiverUserId], references: [id])
+
+  @@index([settlementId])
+  @@index([standalonePaymentId])
+  @@index([payerUserId])
+  @@index([receiverUserId])
+  @@index([status])
+}
+
+// ═══════════════════════════════════════════
+// GROUP FUND (Quỹ nhóm)
+// ═══════════════════════════════════════════
+
+model GroupFund {
+  id           String   @id @default(cuid())
+  groupId      String   @unique
+  balance      Decimal  @default(0) @db.Decimal(12, 2)
+  lowThreshold Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  group        Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  transactions FundTransaction[]
+}
+
+model FundTransaction {
+  id                  String                   @id @default(cuid())
+  fundId              String
+  userId              String
+  type                FundTransactionType
+  amount              Decimal                  @db.Decimal(12, 2)
+  note                String?
+  relatedExpenseId    String?
+  /** Chỉ giao dịch CONTRIBUTE: PENDING → chờ duyệt; APPROVED/REJECTED. DEDUCT/REFUND = null. */
+  contributionStatus  FundContributionStatus?
+  proofImageUrls      String[]                 @default([])
+  reviewedByUserId    String?
+  reviewedAt          DateTime?
+  reviewNote          String?
+  createdAt           DateTime                 @default(now())
+
+  fund       GroupFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  user       User      @relation("FundContributor", fields: [userId], references: [id])
+  reviewedBy User?     @relation("FundContributionReviewer", fields: [reviewedByUserId], references: [id])
+
+  @@index([fundId])
+  @@index([userId])
+  @@index([relatedExpenseId])
+  @@index([fundId, contributionStatus])
+}
+
+// ═══════════════════════════════════════════
+// COMMENT
+// ═══════════════════════════════════════════
+
+model Comment {
+  id        String   @id @default(cuid())
+  expenseId String
+  userId    String
+  content   String
+  imageUrls String[] @default([])
+  isEdited  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([expenseId])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════
+// NOTIFICATION
+// ═══════════════════════════════════════════
+
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  type         NotificationType
+  title        String
+  body         String
+  isRead       Boolean          @default(false)
+  data         Json?
+  settlementId String?
+  /** Cùng giá trị cho mọi user trong một đợt gửi từ quản trị (SYSTEM_ANNOUNCEMENT). */
+  broadcastId  String?
+  createdAt    DateTime         @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settlement Settlement? @relation(fields: [settlementId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([settlementId])
+  @@index([broadcastId])
+}
+
+// ═══════════════════════════════════════════
+// GROUP ACTIVITY (append-only, snapshot actor — không FK user/expense để xoá thành viên/chi không làm mất log)
+// ═══════════════════════════════════════════
+
+model GroupActivityLog {
+  id           String   @id @default(cuid())
+  groupId      String
+  actorUserId  String?
+  actorName    String
+  actorEmail   String
+  action       String
+  summary      String
+  targetType   String?
+  targetId     String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+  @@index([groupId, targetType, targetId])
+}
+
+// ═══════════════════════════════════════════
+// FEEDBACK (góp ý / báo lỗi)
+// ═══════════════════════════════════════════
+
+model Feedback {
+  id        String          @id @default(cuid())
+  userId    String
+  type      FeedbackType
+  status    FeedbackStatus  @default(NEW)
+  rating    Int?
+  title     String?
+  body      String?         @db.Text
+  imageUrls String[]        @default([])
+  adminNote String?         @db.Text
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type, createdAt])
+  @@index([status, createdAt])
+}
+
+// ═══════════════════════════════════════════
+// SYSTEM CONFIG (một bản ghi id = default)
+// ═══════════════════════════════════════════
+
+model SystemConfig {
+  id                 String   @id
+  idleTimeoutMinutes Int      @default(0)
+  updatedAt          DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════════
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String?
+  expenseId String?
+  action    String
+  before    Json?
+  after     Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  group   Group?   @relation(fields: [groupId], references: [id])
+  expense Expense? @relation(fields: [expenseId], references: [id])
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([expenseId])
+  @@index([createdAt])
+}

@@ -1,0 +1,1225 @@
+/*
+ * Thứ tự Tailwind v4: @import tailwindcss trước, sau đó @config / @source.
+ * CSS nền + FOUC sidebar nằm trong shell.css (import trước file này trong _app).
+ */
+@import "tailwindcss";
+@import './tokens.css';
+@import './themes.css';
+@config "../../tailwind.config.ts";
+@source "../**/*.{ts,tsx}";
+
+/* Bảng chi tiêu: khoản riêng còn việc với user (chưa duyệt / chưa nộp chứng từ) */
+.expense-row-standalone-attention > .ant-table-cell {
+  background: rgb(254 242 242) !important;
+}
+.expense-row-standalone-attention:hover > .ant-table-cell {
+  background: rgb(254 226 226) !important;
+}
+
+.app-sider {
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--sidebar-border) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Chuỗi flex để vùng menu cuộn được (antd bọc children trong .ant-layout-sider-children) */
+.app-sider.ant-layout-sider {
+  height: 100vh !important;
+}
+
+.app-sider .ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100vh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-sider-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  contain: layout style;
+}
+
+.app-sider-footer {
+  flex-shrink: 0;
+  padding: 6px 0 10px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.app-sider-footer .ant-btn {
+  color: var(--sidebar-icon) !important;
+}
+
+.app-sider-footer .ant-btn:hover {
+  color: var(--sidebar-hover-text) !important;
+}
+
+.ant-layout-sider-collapsed .app-sider-brand {
+  flex-direction: row;
+  justify-content: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.ant-layout-sider-collapsed .app-sider-brand-text {
+  display: none;
+}
+
+.app-sider-brand {
+  padding: 18px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.app-sider-brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--color-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-sider-brand-text {
+  color: var(--sidebar-brand-text);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.app-drawer-head {
+  padding: 16px;
+  border-bottom: 1px solid var(--sidebar-border);
+  background: var(--drawer-head-bg);
+}
+
+.app-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--color-border, #c3c4c7);
+  box-shadow: var(--shadow-sm);
+  padding: 0 20px 0 16px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.app-header-icon-btn.ant-btn {
+  color: var(--color-text-secondary) !important;
+}
+
+.app-header-icon-btn.ant-btn:hover {
+  color: var(--color-brand) !important;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent) !important;
+}
+
+/* Chuông thông báo: cùng đường kính với Avatar size={36} trong app-header-user */
+.app-header-bell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border, #c3c4c7);
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+/* Phiên bản: cùng 36px cao như chuông/theme — màu theo [data-theme] / :root (không lồng color-mix vào --color-brand-soft) */
+.app-header-version {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  /* Fallback (trang auth dùng class không có inline): trộn từ --color-brand thuần */
+  background: color-mix(in srgb, var(--color-brand) 14%, var(--color-surface, #ffffff));
+  color: var(--color-brand-text);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 24%, var(--color-border));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.app-header-version--beta {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-text);
+  font-weight: 700;
+  border-color: color-mix(in srgb, var(--color-brand) 38%, var(--color-border));
+}
+
+/* Ant Layout.Header (antd) hay set màu chữ cho toàn header — ép badge theo token theme */
+.app-header.ant-layout-header .app-header-version {
+  background: color-mix(in srgb, var(--color-brand) 14%, var(--color-surface, #ffffff)) !important;
+  color: var(--color-brand-text) !important;
+  border: 1px solid color-mix(in srgb, var(--color-brand) 24%, var(--color-border)) !important;
+}
+
+.app-header.ant-layout-header .app-header-version--beta {
+  background: var(--color-brand-soft) !important;
+  color: var(--color-brand-text) !important;
+  border-color: color-mix(in srgb, var(--color-brand) 38%, var(--color-border)) !important;
+}
+
+.app-header-actions .ant-badge {
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-header-bell-btn:hover {
+  color: var(--color-brand);
+  background: var(--color-bg-page);
+  border-color: var(--color-border-strong, #a7aaad);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 220px;
+  padding: 6px 10px 6px 6px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.app-header-user:hover {
+  background: rgba(29, 35, 39, 0.06);
+}
+
+.app-header-user-meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.app-header-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header-user-email {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-content {
+  padding: 24px;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.sidebar-section-label {
+  display: block;
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sidebar-section-label) !important;
+}
+
+.sidebar-group-title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sidebar-group-title) !important;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.sidebar-group-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+}
+
+.sidebar-menu.ant-menu-dark,
+.sidebar-menu.ant-menu-dark .ant-menu-sub {
+  background: transparent !important;
+}
+
+.sidebar-menu .ant-menu-item,
+.sidebar-menu .ant-menu-submenu-title {
+  color: var(--sidebar-item) !important;
+  border-radius: 8px;
+  margin: 2px 8px !important;
+  width: calc(100% - 16px) !important;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+/* Khoảng cách icon — chữ (nhóm & mục thường) */
+.sidebar-menu:not(.ant-menu-inline-collapsed) .ant-menu-item .ant-menu-item-icon,
+.sidebar-menu:not(.ant-menu-inline-collapsed) .ant-menu-submenu-title .ant-menu-item-icon {
+  margin-inline-end: 12px !important;
+}
+
+.sidebar-menu:not(.ant-menu-inline-collapsed) .ant-menu-submenu-title .ant-menu-title-content {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* Không trượt/transform chữ & icon khi đổi mục chọn (Ant Design Menu) */
+.sidebar-menu .ant-menu-title-content,
+.sidebar-menu .ant-menu-item-icon,
+.sidebar-menu .ant-menu-item .ant-menu-item-icon + span {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.sidebar-menu .ant-wave {
+  display: none !important;
+}
+
+/* Không animate đóng/mở submenu — tránh nháy khi chọn mục trong nhóm */
+.sidebar-menu.ant-menu .ant-menu-submenu .ant-menu,
+.sidebar-menu.ant-menu-submenu .ant-menu-inline {
+  transition: none !important;
+}
+
+.sidebar-menu .ant-motion-collapse,
+.sidebar-menu .ant-motion-collapse-content,
+.sidebar-menu .rc-motion-collapse,
+.sidebar-menu .rc-motion-collapse-content {
+  transition: none !important;
+  animation: none !important;
+}
+
+.sidebar-menu .ant-menu-item .anticon,
+.sidebar-menu .ant-menu-submenu-title .anticon {
+  color: var(--sidebar-icon) !important;
+}
+
+.sidebar-menu .ant-menu-item:hover,
+.sidebar-menu .ant-menu-submenu-title:hover {
+  background: var(--sidebar-hover-bg) !important;
+  color: var(--sidebar-hover-text) !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-item {
+  color: var(--sidebar-item) !important;
+  margin-left: 4px !important;
+  width: calc(100% - 20px) !important;
+  font-size: 13px;
+}
+
+.sidebar-menu:not(.ant-menu-inline-collapsed) .ant-menu-submenu .ant-menu-item .ant-menu-item-icon {
+  margin-inline-end: 10px !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-item:hover {
+  color: var(--sidebar-hover-text) !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-item-selected {
+  background: var(--sidebar-active-bg) !important;
+  color: var(--sidebar-hover-text) !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-item::after,
+.sidebar-menu .ant-menu-submenu .ant-menu-item-selected::after,
+.sidebar-menu .ant-menu-submenu .ant-menu-item::before,
+.sidebar-menu .ant-menu-submenu .ant-menu-item-selected::before {
+  display: none !important;
+  border: none !important;
+  opacity: 0 !important;
+}
+
+.sidebar-menu .ant-menu-item-selected {
+  background: var(--sidebar-active-bg) !important;
+  color: var(--sidebar-hover-text) !important;
+}
+
+.sidebar-menu .ant-menu-item-selected .anticon,
+.sidebar-menu .ant-menu-submenu-title:hover .anticon,
+.sidebar-menu .ant-menu-item:hover .anticon {
+  color: inherit !important;
+}
+
+.sidebar-menu .ant-menu-item-selected::after,
+.sidebar-menu .ant-menu-item-selected::before {
+  display: none !important;
+  border: none !important;
+  opacity: 0 !important;
+}
+
+.sidebar-menu .ant-menu-submenu-arrow {
+  color: var(--sidebar-arrow) !important;
+}
+
+.sidebar-menu.ant-menu-dark.ant-menu-inline .ant-menu-sub.ant-menu-inline {
+  background: var(--sidebar-submenu-inline-bg) !important;
+  border-radius: 8px;
+  margin: 4px 8px 8px !important;
+  padding: 6px 0 !important;
+}
+
+/*
+ * Thu gọn: rule chung .sidebar-menu .ant-menu-item vẫn width: calc(100% - 16px) → thanh hover rộng gần full Sider.
+ * Ghi đè: ô vuông cố định + margin auto (giống ô logo), padding 0 — bỏ paddingInline calc của antd.
+ */
+.app-sider .sidebar-menu.ant-menu-inline-collapsed.ant-menu-root {
+  --sidebar-collapsed-hit: 44px;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed li.ant-menu-item-disabled:has(.sidebar-section-label) {
+  display: none !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-submenu-arrow {
+  display: none !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-item .ant-menu-title-content,
+.app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-submenu-title .ant-menu-title-content {
+  display: none !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-item:not(.ant-menu-item-divider) {
+  width: var(--sidebar-collapsed-hit) !important;
+  min-width: var(--sidebar-collapsed-hit) !important;
+  max-width: var(--sidebar-collapsed-hit) !important;
+  height: var(--sidebar-collapsed-hit) !important;
+  min-height: var(--sidebar-collapsed-hit) !important;
+  max-height: var(--sidebar-collapsed-hit) !important;
+  margin-block: 4px !important;
+  margin-inline: auto !important;
+  padding: 0 !important;
+  padding-inline: 0 !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-item .ant-menu-item-icon {
+  margin: 0 !important;
+  margin-inline: 0 !important;
+  line-height: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-item-divider {
+  margin: 6px 12px !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  list-style: none !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+  width: var(--sidebar-collapsed-hit) !important;
+  min-width: var(--sidebar-collapsed-hit) !important;
+  max-width: var(--sidebar-collapsed-hit) !important;
+  height: var(--sidebar-collapsed-hit) !important;
+  min-height: var(--sidebar-collapsed-hit) !important;
+  max-height: var(--sidebar-collapsed-hit) !important;
+  margin: 4px 0 !important;
+  padding: 0 !important;
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-item-icon,
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .sidebar-group-icon {
+  margin: 0 !important;
+  line-height: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .sidebar-group-icon {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Thẻ tổng quan — dùng chung Dashboard & trang nhóm */
+.highlight-tile,
+.stat-card {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  box-shadow: var(--shadow-sm) !important;
+  min-height: 132px;
+  min-width: 0;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.highlight-tile .ant-card-body {
+  padding: var(--card-padding) !important;
+}
+
+.highlight-tile.ant-card-hoverable:hover,
+.stat-card:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+.highlight-tile__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.highlight-tile__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.highlight-tile__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.highlight-tile__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.highlight-tile__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text) !important;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.highlight-tile__chevron {
+  flex-shrink: 0;
+  color: var(--color-text-hint) !important;
+  margin-top: 1px;
+}
+
+.highlight-tile__desc {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  color: var(--color-text-secondary) !important;
+  margin: 0 !important;
+}
+
+.highlight-tile__value {
+  font-size: inherit;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.highlight-tile--indigo {
+  border-left: 4px solid var(--color-brand) !important;
+  background: #ffffff !important;
+}
+
+.highlight-tile--rose {
+  border-left: 4px solid #d63638 !important;
+  background: #ffffff !important;
+}
+
+.highlight-tile--emerald {
+  border-left: 4px solid #00a32a !important;
+  background: #ffffff !important;
+}
+
+.highlight-tile--amber {
+  border-left: 4px solid #d54e21 !important;
+  background: #ffffff !important;
+}
+
+.highlight-tile--teal {
+  border-left: 4px solid #2271b1 !important;
+  background: #ffffff !important;
+}
+
+.highlight-tile--violet {
+  border-left: 4px solid #005a87 !important;
+  background: #ffffff !important;
+}
+
+.dashboard-row.ant-row {
+  align-items: stretch;
+}
+
+.dashboard-row > .ant-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  align-self: stretch;
+}
+
+/* Cùng chiều cao; phần mô tả giãn để hàng số liệu thẳng hàng */
+.dashboard-row > .ant-col > a.block,
+.dashboard-row > .ant-col > .highlight-tile.ant-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  width: 100%;
+}
+
+.dashboard-row > .ant-col > a.block > .highlight-tile.ant-card {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.dashboard-row .highlight-tile.ant-card .ant-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dashboard-row .highlight-tile__inner {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-start;
+}
+
+.dashboard-row .highlight-tile__main {
+  flex: 1 1 auto;
+}
+
+.dashboard-row .highlight-tile__desc {
+  flex: 1 1 auto;
+}
+
+.dashboard-row .highlight-tile__value {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.invite-code-box {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+  background: var(--color-bg-page);
+  border: 1px dashed var(--color-border-strong, #a7aaad);
+  border-radius: 12px;
+  padding: 14px 18px;
+  word-break: break-all;
+}
+
+.group-card.ant-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.group-card .ant-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.group-card__inner {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: var(--space-4, 1rem);
+  min-height: 0;
+}
+
+.group-card__main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.group-card__chevron-wrap {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.group-card {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.group-card:hover {
+  border-color: var(--color-border-strong, #a7aaad) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.form-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+/*
+ * Wizard / card nhiều khối — tránh chữ & nút dính mép (DESIGN_STANDARDS.md).
+ * Dùng: <Card><div class="wizard-card-body">…</div><div class="wizard-card-actions">nút</div></Card>
+ */
+.wizard-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.wizard-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.ant-form-item-label > label {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ant-btn-primary {
+  font-weight: 500 !important;
+}
+
+.ant-table {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.ant-table-thead > tr > th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Danh sách tổng kết — padding ô & phân trang theo token spacing (DESIGN_STANDARDS) */
+.settlement-list-table .ant-table-tbody > tr > td.ant-table-cell {
+  padding: var(--space-4) var(--space-6) !important;
+}
+
+.settlement-list-table .ant-table-thead > tr > th.ant-table-cell {
+  padding: var(--space-3) var(--space-6) !important;
+}
+
+.settlement-list-table .ant-pagination {
+  margin: var(--space-6) var(--space-6) 0 !important;
+}
+
+/* Khoảng cách dưới banner lọc — Ant Alert thường reset margin; bọc ngoài + token để không dính bảng */
+.settlement-filter-alert-wrap {
+  margin-bottom: var(--space-8);
+}
+
+.settlement-filter-alert.ant-alert {
+  margin-bottom: 0;
+}
+
+.settlement-filter-alert .ant-alert-action {
+  margin-inline-start: var(--space-4);
+  padding-inline-start: var(--space-2);
+}
+
+.ant-tag {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  border: none !important;
+}
+
+/*
+ * Dragger + listType picture-card (FileUpload, FeedbackImageUpload):
+ * Ant đặt .ant-upload-list ngay sau vùng drag — thêm khoảng cách khi đã có thumbnail.
+ */
+span.ant-upload-wrapper.ant-upload-picture-card-wrapper:has(> .ant-upload.ant-upload-drag):has(
+    .ant-upload-list-item-container
+  )
+  > .ant-upload-list.ant-upload-list-picture-card {
+  margin-top: var(--space-5);
+}
+
+span.ant-upload-wrapper.ant-upload-picture-card-wrapper > .ant-upload.ant-upload-drag {
+  background-color: var(--color-bg-page);
+}
+
+/* Đăng nhập / đăng ký — nền sáng (WordPress #f0f0f1 + thẻ trắng) */
+.auth-page {
+  min-height: 100vh;
+  background: var(--color-bg-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-page__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-page__hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-page__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-page__title {
+  color: var(--color-text);
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.auth-page__subtitle {
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.auth-page__panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+}
+
+.auth-page__panel-title {
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 28px;
+}
+
+.auth-page__label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.auth-page__footer {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* Tác giả / social dưới panel đăng nhập */
+.auth-page__meta {
+  margin-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.auth-page__author-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  line-height: 1.4;
+}
+
+/* Link social đăng nhập: cùng pill `.app-header-version`, hover giống vùng tương tác header */
+.auth-page__meta a.app-header-version {
+  gap: 5px;
+  text-decoration: none !important;
+}
+
+.auth-page__meta a.app-header-version:hover {
+  color: var(--color-brand);
+  background: var(--color-bg-page);
+}
+
+.auth-page__link {
+  color: var(--color-brand);
+  font-weight: 500;
+}
+
+.auth-page__link:hover {
+  color: var(--color-brand-text);
+}
+
+.auth-page__alert {
+  background: var(--color-danger-soft);
+  border: 1px solid rgba(214, 54, 56, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  color: #8a2424;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-page__field-error {
+  color: #d63638;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.auth-card .ant-card-body {
+  padding: 40px !important;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+/* EmptyState — padding & chữ mô tả theo design guide */
+.empty-state.ant-empty {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state .ant-empty-image {
+  height: 40px;
+  color: var(--color-border-strong, #a7aaad);
+}
+
+.empty-state .ant-empty-description {
+  margin-top: 8px !important;
+  color: #646970 !important;
+  font-size: 14px !important;
+}
+
+.page-enter {
+  opacity: 0;
+}
+
+.page-enter-active {
+  opacity: 1;
+  transition: opacity 200ms;
+}
+
+@media (max-width: 768px) {
+  /**
+   * PWA / mobile Safari: bớt zoom khi chạm; iOS không auto-zoom ô nhập nếu font ≥ 16px.
+   * touch-action: manipulation — giảm double-tap zoom trên nút/link (Chrome/Android).
+   */
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .ant-input,
+  .ant-input-affix-wrapper .ant-input,
+  .ant-input-affix-wrapper input.ant-input,
+  .ant-input-password .ant-input,
+  .ant-input-password input.ant-input,
+  textarea.ant-input {
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+  }
+
+  .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+  .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+
+  /* Bảng rộng: cuộn ngang trong khung nội dung (admin + nhóm) */
+  .app-content .ant-table-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .app-content {
+    padding: 16px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+  }
+
+  /* Navbar mobile: chừa chỗ cho menu / chuông / avatar */
+  .app-header {
+    padding: 0 10px 0 8px !important;
+    gap: 6px !important;
+  }
+
+  .app-header-actions {
+    gap: 6px !important;
+  }
+
+  .app-version-badge {
+    display: none !important;
+  }
+
+  .app-header-version {
+    height: 32px !important;
+    min-height: 32px;
+    padding: 0 7px !important;
+    font-size: 10px !important;
+    max-width: min(calc(100vw - 7.5rem), 18rem);
+    letter-spacing: 0.02em !important;
+  }
+
+  .app-header-version__text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .app-header.ant-layout-header .app-header-version {
+    height: 32px !important;
+    padding: 0 7px !important;
+    font-size: 10px !important;
+    max-width: min(calc(100vw - 7.5rem), 18rem) !important;
+  }
+
+  .page-header h1 {
+    font-size: 18px;
+  }
+
+  .ant-layout-sider.app-sider {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex !important;
+  }
+
+  .ant-layout > .ant-layout.app-main-inner {
+    margin-left: 0 !important;
+  }
+
+  /* html.layout-shell-collapsed có specificity cao — ép lại margin 0 trên mobile */
+  html.layout-shell-collapsed .app-main-inner {
+    margin-left: 0 !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.3s ease forwards;
+}
+
+.skeleton-shimmer {
+  background: #dcdcde;
+  border-radius: 6px;
+}
+
+/* Thông báo hệ thống (broadcast): icon cạnh title + nền theo theme (không dùng trắng thuần) */
+.ant-notification .expense-broadcast-toast.ant-notification-notice {
+  width: min(420px, calc(100vw - 48px)) !important;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 18px 44px 18px 18px !important;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--color-border-light, var(--color-border));
+  background: color-mix(in srgb, var(--color-brand-soft) 46%, var(--color-bg-page)) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.ant-notification .expense-broadcast-toast .ant-notification-notice-message {
+  margin-bottom: 8px !important;
+}
+
+.ant-notification .expense-broadcast-toast .ant-notification-notice-description {
+  margin-inline-start: 0 !important;
+  padding-inline-start: 0 !important;
+}
+
+.expense-broadcast-toast__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.expense-broadcast-toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--color-brand) 14%, var(--color-bg-page));
+  color: var(--color-brand);
+  flex-shrink: 0;
+}
+
+.expense-broadcast-toast__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.expense-broadcast-toast__body {
+  padding-left: calc(36px + 10px);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+

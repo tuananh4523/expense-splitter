@@ -1,0 +1,54 @@
+{
+  "name": "@expense/web",
+  "version": "1.0.1 - beta",
+  "private": true,
+  "author": "Đỗ Văn Cường",
+  "authorSocial": {
+    "github": "dovancuongadhp",
+    "linkedin": "dovancuongadhp"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ant-design/cssinjs": "^1.24.0",
+    "@ant-design/icons": "^6.0.0",
+    "@expense/types": "workspace:*",
+    "@hookform/resolvers": "^5.0.0",
+    "@iconify/react": "^6.0.2",
+    "@tanstack/react-query": "^5.67.0",
+    "@tanstack/react-query-devtools": "^5.67.0",
+    "antd": "^5.24.0",
+    "antd-img-crop": "^4.30.0",
+    "axios": "^1.8.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "next": "16.2.1",
+    "next-auth": "^4.24.11",
+    "next-pwa": "5.6.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.54.0",
+    "recharts": "^2.15.0",
+    "serialize-javascript": "^6.0.2",
+    "socket.io-client": "^4.8.1",
+    "styled-components": "^6.3.12",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@expense/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/styled-components": "^5.1.36",
+    "autoprefixer": "^10.4.20",
+    "babel-plugin-react-compiler": "1.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.3"
+  }
+}

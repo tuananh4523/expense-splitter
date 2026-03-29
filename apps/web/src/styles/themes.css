@@ -1,0 +1,363 @@
+/**
+ * Bảng màu bổ sung (WordPress admin schemes).
+ * Mặc định `fresh` = :root trong tokens.css — không đặt data-theme.
+ */
+[data-theme='light'] {
+  --wp-blue: #d54e21;
+  --wp-blue-dark: #c0461a;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #d54e21 16%, #ffffff);
+  --wp-orange: #9ebaa0;
+  --color-accent: var(--wp-orange);
+  --sidebar-bg: #e5e5e5;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-brand-text: #333333;
+  --sidebar-group-title: #333333;
+  --sidebar-item: #333333;
+  --sidebar-icon: #50575e;
+  --sidebar-hover-bg: #cccccc;
+  --sidebar-hover-text: #1d2327;
+  --sidebar-active-bg: rgba(213, 78, 33, 0.28);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.06);
+  --sidebar-section-label: #646970;
+  --sidebar-arrow: #646970;
+  --drawer-head-bg: #e5e5e5;
+  --drawer-body-bg: #e5e5e5;
+}
+
+[data-theme='80s-kid'] {
+  --wp-blue: #cb2b8e;
+  --wp-blue-dark: #b52680;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #cb2b8e 14%, #ffffff);
+  --wp-orange: #f0e328;
+  --color-accent: #5dc1b9;
+  --sidebar-bg: #1c2260;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(203, 43, 142, 0.4);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.25);
+  --sidebar-section-label: #a5b4fc;
+  --sidebar-arrow: #a5b4fc;
+  --drawer-head-bg: #1c2260;
+  --drawer-body-bg: #1c2260;
+}
+
+[data-theme='aubergine'] {
+  --wp-blue: #a3b745;
+  --wp-blue-dark: #8fa03b;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #a3b745 16%, #ffffff);
+  --wp-orange: #d499c1;
+  --color-accent: var(--wp-orange);
+  --sidebar-bg: #4a1a2c;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(163, 183, 69, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #d4a5c4;
+  --sidebar-arrow: #d4a5c4;
+  --drawer-head-bg: #4a1a2c;
+  --drawer-body-bg: #4a1a2c;
+}
+
+[data-theme='blue'] {
+  --wp-blue: #e1a948;
+  --wp-blue-dark: #c9943d;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #e1a948 18%, #ffffff);
+  --wp-orange: #72c2e9;
+  --color-accent: #4796b3;
+  --sidebar-bg: #096484;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(225, 169, 72, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.2);
+  --sidebar-section-label: #93c5fd;
+  --sidebar-arrow: #93c5fd;
+  --drawer-head-bg: #096484;
+  --drawer-body-bg: #096484;
+}
+
+[data-theme='coffee'] {
+  --wp-blue: #c7a589;
+  --wp-blue-dark: #b39070;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #c7a589 18%, #ffffff);
+  --wp-orange: #e5c08a;
+  --color-accent: #9ea476;
+  --sidebar-bg: #46403c;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(199, 165, 137, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #a8a29e;
+  --sidebar-arrow: #a8a29e;
+  --drawer-head-bg: #46403c;
+  --drawer-body-bg: #46403c;
+}
+
+[data-theme='cruise'] {
+  --wp-blue: #d9ab59;
+  --wp-blue-dark: #c49a46;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #d9ab59 18%, #ffffff);
+  --wp-orange: #82b4c8;
+  --color-accent: #a3b9c9;
+  --sidebar-bg: #263238;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(217, 171, 89, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #94a3b8;
+  --sidebar-arrow: #94a3b8;
+  --drawer-head-bg: #263238;
+  --drawer-body-bg: #263238;
+}
+
+[data-theme='ectoplasm'] {
+  --wp-blue: #a7b656;
+  --wp-blue-dark: #919e43;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #a7b656 18%, #ffffff);
+  --wp-orange: #c6d46e;
+  --color-accent: #8c88b2;
+  --sidebar-bg: #413256;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(167, 182, 86, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #c4b5fd;
+  --sidebar-arrow: #c4b5fd;
+  --drawer-head-bg: #413256;
+  --drawer-body-bg: #413256;
+}
+
+[data-theme='flat'] {
+  --wp-blue: #f18500;
+  --wp-blue-dark: #d97700;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #f18500 16%, #ffffff);
+  --wp-orange: #56c2d6;
+  --color-accent: #3fbbc0;
+  --sidebar-bg: #1e2327;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(241, 133, 0, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #9ca3af;
+  --sidebar-arrow: #9ca3af;
+  --drawer-head-bg: #1e2327;
+  --drawer-body-bg: #1e2327;
+}
+
+[data-theme='lawn'] {
+  --wp-blue: #b4b848;
+  --wp-blue-dark: #a0a43a;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #b4b848 18%, #ffffff);
+  --wp-orange: #d8e27a;
+  --color-accent: #7b9c5e;
+  --sidebar-bg: #1b3218;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(180, 184, 72, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #86efac;
+  --sidebar-arrow: #86efac;
+  --drawer-head-bg: #1b3218;
+  --drawer-body-bg: #1b3218;
+}
+
+[data-theme='midnight'] {
+  --wp-blue: #e14d43;
+  --wp-blue-dark: #cc4039;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #e14d43 14%, #ffffff);
+  --wp-orange: #77a6bc;
+  --color-accent: #363b3f;
+  --sidebar-bg: #25282b;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(225, 77, 67, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #94a3b8;
+  --sidebar-arrow: #94a3b8;
+  --drawer-head-bg: #25282b;
+  --drawer-body-bg: #25282b;
+}
+
+[data-theme='ocean'] {
+  --wp-blue: #9ebaa0;
+  --wp-blue-dark: #88a48a;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #9ebaa0 20%, #ffffff);
+  --wp-orange: #c4dde2;
+  --color-accent: #738e8f;
+  --sidebar-bg: #627c83;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(158, 186, 160, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.18);
+  --sidebar-section-label: #bae6fd;
+  --sidebar-arrow: #bae6fd;
+  --drawer-head-bg: #627c83;
+  --drawer-body-bg: #627c83;
+}
+
+[data-theme='primary'] {
+  --wp-blue: #b81c2e;
+  --wp-blue-dark: #a21828;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #b81c2e 12%, #ffffff);
+  --wp-orange: #f9c440;
+  --color-accent: #2271b1;
+  --sidebar-bg: #191e23;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(184, 28, 46, 0.4);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #fca5a5;
+  --sidebar-arrow: #fca5a5;
+  --drawer-head-bg: #191e23;
+  --drawer-body-bg: #191e23;
+}
+
+[data-theme='seashore'] {
+  --wp-blue: #a09060;
+  --wp-blue-dark: #8c7d50;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #a09060 18%, #ffffff);
+  --wp-orange: #c7ac7d;
+  --color-accent: #d4c5a0;
+  --sidebar-bg: #ede8d6;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-brand-text: #44403c;
+  --sidebar-group-title: #44403c;
+  --sidebar-item: #57534e;
+  --sidebar-icon: #57534e;
+  --sidebar-hover-bg: #ddd8c0;
+  --sidebar-hover-text: #1c1917;
+  --sidebar-active-bg: rgba(160, 144, 96, 0.35);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.05);
+  --sidebar-section-label: #78716c;
+  --sidebar-arrow: #78716c;
+  --drawer-head-bg: #ede8d6;
+  --drawer-body-bg: #ede8d6;
+}
+
+[data-theme='sunrise'] {
+  --wp-blue: #dd823b;
+  --wp-blue-dark: #c97030;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #dd823b 16%, #ffffff);
+  --wp-orange: #f0c050;
+  --color-accent: #e05c5c;
+  --sidebar-bg: #6e3d3d;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(221, 130, 59, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #fdba74;
+  --sidebar-arrow: #fdba74;
+  --drawer-head-bg: #6e3d3d;
+  --drawer-body-bg: #6e3d3d;
+}
+
+[data-theme='vineyard'] {
+  --wp-blue: #c09050;
+  --wp-blue-dark: #a87c40;
+  --color-brand: var(--wp-blue);
+  --color-brand-text: var(--wp-blue-dark);
+  --color-brand-soft: color-mix(in srgb, #c09050 18%, #ffffff);
+  --wp-orange: #d4b080;
+  --color-accent: #7a4060;
+  --sidebar-bg: #4a2040;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-brand-text: #eeeeee;
+  --sidebar-group-title: #f0f0f1;
+  --sidebar-item: #c3c4c7;
+  --sidebar-icon: #c3c4c7;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(192, 144, 80, 0.38);
+  --sidebar-submenu-inline-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-section-label: #e9d5ff;
+  --sidebar-arrow: #e9d5ff;
+  --drawer-head-bg: #4a2040;
+  --drawer-body-bg: #4a2040;
+}
