@@ -29,34 +29,34 @@ async function main() {
   const hash = (pw: string) => bcrypt.hash(pw, 12)
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admincuong@gmail.com' },
+    where: { email: 'adminta@gmail.com' },
     update: {
-      passwordHash: await hash('Cuongdovan01'),
+      passwordHash: await hash('1234567'),
       isActive: true,
       name: 'Admin User',
       role: 'ADMIN',
     },
     create: {
-      email: 'admincuong@gmail.com',
+      email: 'adminta@gmail.com',
       name: 'Admin User',
-      passwordHash: await hash('Cuongdovan01'),
+      passwordHash: await hash('1234567'),
       role: 'ADMIN',
     },
   })
 
-  const user1 = await prisma.user.upsert({
-    where: { email: 'alice@test.com' },
-    update: {
-      passwordHash: await hash('user123'),
-      isActive: true,
-      name: 'Alice Nguyễn',
-    },
-    create: {
-      email: 'alice@test.com',
-      name: 'Alice Nguyễn',
-      passwordHash: await hash('user123'),
-    },
-  })
+  // const user1 = await prisma.user.upsert({
+  //   where: { email: 'alice@test.com' },
+  //   update: {
+  //     passwordHash: await hash('user123'),
+  //     isActive: true,
+  //     name: 'Alice Nguyễn',
+  //   },
+  //   create: {
+  //     email: 'alice@test.com',
+  //     name: 'Alice Nguyễn',
+  //     passwordHash: await hash('user123'),
+  //   },
+  // })
 
   const user2 = await prisma.user.upsert({
     where: { email: 'bob@test.com' },
@@ -66,9 +66,9 @@ async function main() {
       name: 'Bob Trần',
     },
     create: {
-      email: 'bob@test.com',
-      name: 'Bob Trần',
-      passwordHash: await hash('user123'),
+      email: 'ADMIN@gmail.com',
+      name: 'TUAN ANH',
+      passwordHash: await hash('1234567'),
     },
   })
 
@@ -87,7 +87,7 @@ async function main() {
   // Add members
   for (const [userId, role] of [
     [admin.id, 'LEADER'],
-    [user1.id, 'MEMBER'],
+    // [user1.id, 'MEMBER'],
     [user2.id, 'MEMBER'],
   ] as const) {
     await prisma.groupMember.upsert({
@@ -98,9 +98,9 @@ async function main() {
   }
 
   console.log('Seed complete.')
-  console.log('  admincuong@gmail.com / Cuongdovan01')
-  console.log('  alice@test.com / user123')
-  console.log('  bob@test.com / user123')
+  console.log('adminta@gmail.com/ 1234567')
+  // console.log('  alice@test.com / user123')
+  console.log('ADMIN@gmail.com/ 1234567')
 }
 
 main()
