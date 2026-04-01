@@ -146,7 +146,7 @@ export default function RegisterPage() {
                     id="reg-email"
                     size="large"
                     type="email"
-                    placeholder="email@swantech.vn"
+                    placeholder="email@gmail.com"
                     prefix={<Icon icon="fluent:mail-20-regular" color={iconMuted} width={18} />}
                     status={formState.errors.email ? 'error' : ''}
                     autoComplete="email"

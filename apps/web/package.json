@@ -2,10 +2,10 @@
   "name": "@expense/web",
   "version": "1.0.1 - beta",
   "private": true,
-  "author": "Đỗ Văn Cường",
+  "author": "Nguyễn Văn Tuấn Anh",
   "authorSocial": {
-    "github": "dovancuongadhp",
-    "linkedin": "dovancuongadhp"
+    "github": "tuananh4523",
+    "linkedin": "tuananh4523"
   },
   "scripts": {
     "dev": "next dev",

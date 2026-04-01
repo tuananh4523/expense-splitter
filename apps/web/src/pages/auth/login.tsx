@@ -51,7 +51,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError(
           result.error === 'CredentialsSignin'
-            ? 'Email hoặc mật khẩu không đúng. Nếu mới clone repo: chạy migration + seed để có admincuong@gmail.com / Cuongdovan01.'
+            ? 'Email hoặc mật khẩu không đúng. Nếu mới clone repo: chạy migration + seed để có adminta@gmail.com / 1234567.'
             : result.error,
         )
       } else {
@@ -101,7 +101,7 @@ export default function LoginPage() {
                     {...field}
                     id="login-email"
                     size="large"
-                    placeholder="email@swantech.vn"
+                    placeholder="email@gmail.com"
                     prefix={<Icon icon="fluent:mail-20-regular" color={iconMuted} width={18} />}
                     status={formState.errors.email ? 'error' : ''}
                   />
@@ -168,7 +168,7 @@ export default function LoginPage() {
               <Icon icon="mdi:github" width={16} color="currentColor" aria-hidden />
               GitHub
             </a>
-            <a
+            {/* <a
               href={APP_AUTHOR_LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
@@ -176,7 +176,7 @@ export default function LoginPage() {
             >
               <Icon icon="mdi:linkedin" width={16} color="currentColor" aria-hidden />
               LinkedIn
-            </a>
+            </a> */}
           </div>
         </div>
       </div>
