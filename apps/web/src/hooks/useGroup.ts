@@ -137,10 +137,12 @@ export const useJoinByInviteCode = () => {
   const router = useRouter()
   return useMutation({
     mutationFn: (inviteCode: string) =>
-      api.post<{ data: { ok: boolean; groupId: string } }>('/groups/join', { inviteCode }).then((r) => r.data.data),
+      api.post<{ data: { ok: boolean; groupId: string; pendingApproval?: boolean } }>('/groups/join', { inviteCode }).then((r) => r.data.data),
     onSuccess: (d) => {
       void qc.invalidateQueries({ queryKey: groupKeys.all })
-      void router.push(`/groups/${d.groupId}`)
+      if (!d.pendingApproval) {
+        void router.push(`/groups/${d.groupId}`)
+      }
     },
   })
 }
@@ -148,7 +150,7 @@ export const useJoinByInviteCode = () => {
 export const useUpdateGroup = (groupId: string) => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { name?: string; description?: string | null; avatarUrl?: string | null; icon?: string; color?: string }) =>
+    mutationFn: (data: { name?: string; description?: string | null; avatarUrl?: string | null; icon?: string; color?: string; requireApproval?: boolean }) =>
       api.patch<{ data: GroupDto }>(`/groups/${groupId}`, data).then((r) => r.data.data),
     onSuccess: (data) => {
       qc.setQueryData(groupKeys.detail(groupId), data)
@@ -276,6 +278,41 @@ export const useAdminDeleteGroupActivityLogs = () => {
         .then((r) => r.data.data),
     onSuccess: (_, p) => {
       void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'activity', p.groupId] })
+    },
+  })
+}
+
+import type { GroupJoinRequestDto } from '@expense/types'
+
+export const useGroupJoinRequests = (groupId: string | undefined, enabled = true) =>
+  useQuery({
+    queryKey: [...groupKeys.all, 'joinRequests', groupId ?? ''] as const,
+    queryFn: () =>
+      api.get<{ data: GroupJoinRequestDto[] }>(`/groups/${groupId}/join-requests`).then((r) => r.data.data),
+    enabled: Boolean(groupId) && enabled,
+  })
+
+export const useApproveJoinRequest = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      api.post(`/groups/${groupId}/join-requests/${requestId}/approve`, {}).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'joinRequests', groupId] })
+      void qc.invalidateQueries({ queryKey: groupKeys.members(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.lists() })
+    },
+  })
+}
+
+export const useRejectJoinRequest = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      api.post(`/groups/${groupId}/join-requests/${requestId}/reject`, {}).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'joinRequests', groupId] })
     },
   })
 }

@@ -33,3 +33,10 @@ export const GroupRole = {
   MEMBER: 'MEMBER',
 } as const
 export type GroupRole = (typeof GroupRole)[keyof typeof GroupRole]
+
+export const JoinRequestStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const
+export type JoinRequestStatus = (typeof JoinRequestStatus)[keyof typeof JoinRequestStatus]

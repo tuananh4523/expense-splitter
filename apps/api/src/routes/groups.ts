@@ -158,6 +158,7 @@ async function toGroupDto(
     inviteEnabled: boolean
     inviteExpires: Date | null
     isActive: boolean
+    requireApproval: boolean
     createdAt: Date
   },
   myRole: string,
@@ -177,6 +178,7 @@ async function toGroupDto(
     inviteEnabled: group.inviteEnabled,
     inviteExpires: group.inviteExpires?.toISOString() ?? null,
     isActive: group.isActive,
+    requireApproval: group.requireApproval,
     memberCount,
     myRole,
     fundBalance,
@@ -260,6 +262,26 @@ groupRoutes.post('/join', async (c) => {
   if (existing != null && existing.leftAt == null && existing.isActive) {
     return c.json({ error: 'Bạn đã là thành viên nhóm này' }, 409)
   }
+  if (targetGroup.requireApproval) {
+    const existingReq = await prisma.groupJoinRequest.findUnique({
+      where: { groupId_userId: { groupId: targetGroup.id, userId } },
+    })
+    if (existingReq) {
+      if (existingReq.status === 'PENDING') {
+        return c.json({ error: 'Đã gửi yêu cầu tham gia, vui lòng chờ quản trị viên duyệt' }, 409)
+      }
+      if (existingReq.status === 'REJECTED') {
+        return c.json({ error: 'Yêu cầu tham gia của bạn đã bị từ chối trước đó' }, 403)
+      }
+    }
+    await prisma.groupJoinRequest.upsert({
+      where: { groupId_userId: { groupId: targetGroup.id, userId } },
+      create: { groupId: targetGroup.id, userId, status: 'PENDING' },
+      update: { status: 'PENDING' },
+    })
+    return c.json({ data: { ok: true, groupId: targetGroup.id, pendingApproval: true } })
+  }
+
   if (existing) {
     await prisma.groupMember.update({
       where: { id: existing.id },
@@ -617,6 +639,116 @@ groupRoutes.get('/:groupId/members/invite-search', async (c) => {
   return c.json({ data })
 })
 
+groupRoutes.get('/:groupId/join-requests', async (c) => {
+  const groupId = c.req.param('groupId')
+  const userId = c.get('userId')
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Không có quyền' }, 403)
+  }
+  const requests = await prisma.groupJoinRequest.findMany({
+    where: { groupId, status: 'PENDING' },
+    include: {
+      user: { select: { id: true, name: true, email: true, avatarUrl: true } }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+  const dtos = await Promise.all(requests.map(async req => ({
+    id: req.id,
+    groupId: req.groupId,
+    userId: req.userId,
+    status: req.status,
+    createdAt: req.createdAt.toISOString(),
+    user: {
+      ...req.user,
+      avatarUrl: await signedStorageUrlForUser(req.user.avatarUrl, userId)
+    }
+  })))
+  return c.json({ data: dtos })
+})
+
+groupRoutes.post('/:groupId/join-requests/:requestId/approve', async (c) => {
+  const groupId = c.req.param('groupId')
+  const requestId = c.req.param('requestId')
+  const userId = c.get('userId')
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Không có quyền' }, 403)
+  }
+  const req = await prisma.groupJoinRequest.findFirst({
+    where: { id: requestId, groupId, status: 'PENDING' },
+    include: { user: { select: { id: true, name: true, email: true } } }
+  })
+  if (!req) return c.json({ error: 'Không tìm thấy yêu cầu' }, 404)
+  
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId: req.userId } },
+    })
+    if (existing) {
+      await tx.groupMember.update({
+        where: { id: existing.id },
+        data: { isActive: true, leftAt: null, role: 'MEMBER' },
+      })
+    } else {
+      await tx.groupMember.create({
+        data: { groupId, userId: req.userId, role: 'MEMBER' },
+      })
+    }
+    await tx.groupJoinRequest.update({
+      where: { id: requestId },
+      data: { status: 'APPROVED' },
+    })
+  })
+  const adminSnap = await actorSnapshot(prisma, userId)
+  await writeGroupActivityLog(prisma, {
+    groupId,
+    actorUserId: userId,
+    actorName: adminSnap.name,
+    actorEmail: adminSnap.email,
+    action: 'JOIN_REQUEST_APPROVED',
+    summary: `${adminSnap.name} (${adminSnap.email}) đã duyệt yêu cầu tham gia của ${req.user.name} (${req.user.email})`,
+    targetType: 'MEMBER',
+    targetId: req.userId,
+  })
+  return c.json({ data: { ok: true } })
+})
+
+groupRoutes.post('/:groupId/join-requests/:requestId/reject', async (c) => {
+  const groupId = c.req.param('groupId')
+  const requestId = c.req.param('requestId')
+  const userId = c.get('userId')
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Không có quyền' }, 403)
+  }
+  const req = await prisma.groupJoinRequest.findFirst({
+    where: { id: requestId, groupId, status: 'PENDING' },
+    include: { user: { select: { id: true, name: true, email: true } } }
+  })
+  if (!req) return c.json({ error: 'Không tìm thấy yêu cầu' }, 404)
+  
+  await prisma.groupJoinRequest.update({
+    where: { id: requestId },
+    data: { status: 'REJECTED' },
+  })
+  const adminSnap = await actorSnapshot(prisma, userId)
+  await writeGroupActivityLog(prisma, {
+    groupId,
+    actorUserId: userId,
+    actorName: adminSnap.name,
+    actorEmail: adminSnap.email,
+    action: 'JOIN_REQUEST_REJECTED',
+    summary: `${adminSnap.name} (${adminSnap.email}) đã từ chối yêu cầu tham gia của ${req.user.name} (${req.user.email})`,
+    targetType: 'MEMBER',
+    targetId: req.userId,
+  })
+  return c.json({ data: { ok: true } })
+})
+
 groupRoutes.get('/:groupId/members', async (c) => {
   const userId = c.get('userId')
   const groupId = c.req.param('groupId')
@@ -772,6 +904,21 @@ groupRoutes.post('/:groupId/members', async (c) => {
     })
     if (existing != null && existing.leftAt == null && existing.isActive) {
       return c.json({ error: 'Bạn đã là thành viên nhóm này' }, 409)
+    }
+    if (targetGroup.requireApproval) {
+      const existingReq = await prisma.groupJoinRequest.findUnique({
+        where: { groupId_userId: { groupId: targetGroup.id, userId } },
+      })
+      if (existingReq) {
+        if (existingReq.status === 'PENDING') return c.json({ error: 'Đã gửi yêu cầu tham gia, chờ duyệt' }, 409)
+        if (existingReq.status === 'REJECTED') return c.json({ error: 'Yêu cầu tham gia bị từ chối' }, 403)
+      }
+      await prisma.groupJoinRequest.upsert({
+        where: { groupId_userId: { groupId: targetGroup.id, userId } },
+        create: { groupId: targetGroup.id, userId, status: 'PENDING' },
+        update: { status: 'PENDING' },
+      })
+      return c.json({ data: { ok: true, groupId: targetGroup.id, pendingApproval: true } })
     }
     if (existing) {
       await prisma.groupMember.update({
@@ -1317,6 +1464,7 @@ groupRoutes.patch('/:groupId', async (c) => {
       ...(parsed.data.avatarUrl !== undefined ? { avatarUrl: parsed.data.avatarUrl } : {}),
       ...(parsed.data.icon !== undefined ? { icon: parsed.data.icon?.trim() ?? null } : {}),
       ...(parsed.data.color !== undefined ? { color: parsed.data.color?.trim() ?? null } : {}),
+      ...(parsed.data.requireApproval !== undefined ? { requireApproval: parsed.data.requireApproval } : {}),
     },
     include: {
       fund: true,
@@ -1329,6 +1477,7 @@ groupRoutes.patch('/:groupId', async (c) => {
   if (parsed.data.avatarUrl !== undefined) parts.push('ảnh đại diện')
   if (parsed.data.icon !== undefined) parts.push('biểu tượng')
   if (parsed.data.color !== undefined) parts.push('màu')
+  if (parsed.data.requireApproval !== undefined) parts.push('duyệt thành viên')
   const gu = await actorSnapshot(prisma, userId)
   await writeGroupActivityLog(prisma, {
     groupId,

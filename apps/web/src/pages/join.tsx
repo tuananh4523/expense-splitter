@@ -108,7 +108,13 @@ export default function JoinGroupPage() {
       message.error('Nhập mã mời')
       return
     }
-    void join.mutateAsync(c).catch((e) => message.error(e instanceof Error ? e.message : 'Không tham gia được'))
+    void join.mutateAsync(c)
+      .then((res) => {
+        if (res.pendingApproval) {
+          message.success('Đã gửi yêu cầu tham gia, chờ quản trị viên duyệt')
+        }
+      })
+      .catch((e) => message.error(e instanceof Error ? e.message : 'Không tham gia được'))
   }
 
   if (!router.isReady) {

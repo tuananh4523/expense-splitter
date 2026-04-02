@@ -481,8 +481,8 @@ export function ExpenseWizardForm({
                   min={1}
                   value={field.value}
                   onChange={(v) => field.onChange(typeof v === 'number' ? v : 0)}
-                  formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(v) => Number(v?.replace(/,/g, '') ?? 0)}
+                  formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                  parser={(v) => Number(`${v}`.replace(/\./g, '')) || 0}
                 />
               )}
             />

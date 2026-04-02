@@ -10,13 +10,16 @@ import {
   useLeaveGroup,
   useRemoveMember,
   useUpdateMemberRole,
+  useGroupJoinRequests,
+  useApproveJoinRequest,
+  useRejectJoinRequest,
 } from '@/hooks/useGroup'
 import { withAuth } from '@/utils/withAuth'
 import { fmtDate } from '@/utils/date'
 import { UserAddOutlined } from '@ant-design/icons'
 import { Icon } from '@iconify/react'
-import type { MemberDto, PendingGroupInviteDto } from '@expense/types'
-import { App, Avatar, Button, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import type { MemberDto, PendingGroupInviteDto, GroupJoinRequestDto } from '@expense/types'
+import { App, Avatar, Button, Modal, Popconfirm, Select, Space, Table, Tabs, Tag, Tooltip, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
@@ -35,6 +38,7 @@ type GroupMemberRole = 'LEADER' | 'VICE_LEADER' | 'MEMBER'
 type Row =
   | { key: string; kind: 'member'; member: MemberDto }
   | { key: string; kind: 'pending'; invite: PendingGroupInviteDto }
+  | { key: string; kind: 'join-request'; request: GroupJoinRequestDto }
 
 export default function GroupMembersPage() {
   const { message } = App.useApp()
@@ -42,7 +46,10 @@ export default function GroupMembersPage() {
   const { data: session } = useSession()
   const groupId = typeof router.query.groupId === 'string' ? router.query.groupId : ''
   const { data: group } = useGroup(groupId)
+  const isLeader = group?.myRole === 'LEADER'
+  const canManageInvites = group?.myRole === 'LEADER' || group?.myRole === 'VICE_LEADER'
   const { data: memberList, isLoading } = useGroupMembers(groupId)
+  const { data: joinRequests = [], isLoading: isJoinRequestsLoading } = useGroupJoinRequests(groupId, canManageInvites)
   const members = memberList?.members ?? []
   const pendingInvites = memberList?.pendingInvites ?? []
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -53,22 +60,27 @@ export default function GroupMembersPage() {
   const remove = useRemoveMember(groupId)
   const leave = useLeaveGroup(groupId)
   const cancelInvite = useCancelGroupInvite(groupId)
+  const approveReq = useApproveJoinRequest(groupId)
+  const rejectReq = useRejectJoinRequest(groupId)
 
   if (!groupId) return null
 
-  const isLeader = group?.myRole === 'LEADER'
-  const canManageInvites =
-    group?.myRole === 'LEADER' || group?.myRole === 'VICE_LEADER'
   const canLeaveGroup = group != null && group.myRole !== 'LEADER'
   const uid = session?.user?.id
 
-  const dataSource: Row[] = useMemo(() => {
+  const memberRows: Row[] = useMemo(() => {
     const pendingRows: Row[] = isLeader
       ? pendingInvites.map((inv) => ({ key: `p-${inv.id}`, kind: 'pending' as const, invite: inv }))
       : []
-    const memberRows: Row[] = members.map((m) => ({ key: `m-${m.id}`, kind: 'member' as const, member: m }))
-    return [...pendingRows, ...memberRows]
+    const mRows: Row[] = members.map((m) => ({ key: `m-${m.id}`, kind: 'member' as const, member: m }))
+    return [...pendingRows, ...mRows]
   }, [isLeader, pendingInvites, members])
+
+  const requestRows: Row[] = useMemo(() => {
+    return canManageInvites
+      ? joinRequests.map((req) => ({ key: `r-${req.id}`, kind: 'join-request' as const, request: req }))
+      : []
+  }, [canManageInvites, joinRequests])
 
   const columns: ColumnsType<Row> = [
     {
@@ -76,7 +88,21 @@ export default function GroupMembersPage() {
       key: 'user',
       align: 'left',
       render: (_, row) =>
-        row.kind === 'member' ? (
+        row.kind === 'join-request' ? (
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={row.request.user.avatarUrl ?? undefined}
+              size={32}
+              className="shrink-0 !bg-blue-100 !text-blue-800 !font-semibold"
+            >
+              {row.request.user.name[0]?.toUpperCase()}
+            </Avatar>
+            <div className="min-w-0">
+              <div className="font-medium text-stone-900 leading-tight">{row.request.user.name}</div>
+              <div className="text-xs text-stone-400">{row.request.user.email}</div>
+            </div>
+          </div>
+        ) : row.kind === 'member' ? (
           <div className="flex items-center gap-3">
             <Avatar
               src={row.member.user.avatarUrl ?? undefined}
@@ -111,7 +137,9 @@ export default function GroupMembersPage() {
       key: 'status',
       width: 168,
       render: (_, row) =>
-        row.kind === 'member' ? (
+        row.kind === 'join-request' ? (
+          <Tag color="processing">Xin gia nhập</Tag>
+        ) : row.kind === 'member' ? (
           <Tag color="success">Đã tham gia</Tag>
         ) : (
           <Tag color="warning">Đang chờ xác nhận</Tag>
@@ -133,7 +161,11 @@ export default function GroupMembersPage() {
       key: 'joinedAt',
       align: 'left',
       render: (_, row) =>
-        row.kind === 'member' ? (
+        row.kind === 'join-request' ? (
+          <div className="text-xs">
+            <div>Gửi {fmtDate(row.request.createdAt)}</div>
+          </div>
+        ) : row.kind === 'member' ? (
           fmtDate(row.member.joinedAt)
         ) : (
           <div className="text-xs">
@@ -227,6 +259,40 @@ export default function GroupMembersPage() {
       width: isLeader ? 200 : 96,
       render: (_, row) => (
         <Space size={4} onClick={(e) => e.stopPropagation()}>
+          {row.kind === 'join-request' && canManageInvites ? (
+            <>
+              <Tooltip title="Chấp thuận">
+                <Button 
+                  type="text" 
+                  size="small" 
+                  className="text-green-600 hover:text-green-700" 
+                  icon={<Icon icon="mdi:check-circle-outline" width={18} />} 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void approveReq.mutateAsync(row.request.id)
+                      .then(() => message.success('Đã chấp thuận'))
+                      .catch(err => message.error(err instanceof Error ? err.message : 'Lỗi'))
+                  }}
+                  aria-label="Chấp thuận"
+                />
+              </Tooltip>
+              <Tooltip title="Từ chối">
+                <Button 
+                  type="text" 
+                  size="small" 
+                  danger
+                  icon={<Icon icon="mdi:close-circle-outline" width={18} />} 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void rejectReq.mutateAsync(row.request.id)
+                      .then(() => message.success('Đã từ chối'))
+                      .catch(err => message.error(err instanceof Error ? err.message : 'Lỗi'))
+                  }}
+                  aria-label="Từ chối"
+                />
+              </Tooltip>
+            </>
+          ) : null}
           {row.kind === 'member' ? (
             <Tooltip title="Xem hồ sơ">
               <Button
@@ -328,12 +394,38 @@ export default function GroupMembersPage() {
         </div>
       ) : null}
 
-      <Table<Row>
-        rowKey="key"
-        loading={isLoading}
-        columns={columns}
-        dataSource={dataSource}
-        scroll={{ x: true }}
+      <Tabs
+        className="[&_.ant-tabs-nav]:!mb-4"
+        items={[
+          {
+            key: 'members',
+            label: 'Thành viên',
+            children: (
+              <Table<Row>
+                rowKey="key"
+                loading={isLoading}
+                columns={columns}
+                dataSource={memberRows}
+                scroll={{ x: true }}
+              />
+            ),
+          },
+          ...(canManageInvites ? [
+            {
+              key: 'requests',
+              label: `Yêu cầu xin vào ${joinRequests.length > 0 ? `(${joinRequests.length})` : ''}`,
+              children: (
+                <Table<Row>
+                  rowKey="key"
+                  loading={isJoinRequestsLoading}
+                  columns={columns}
+                  dataSource={requestRows}
+                  scroll={{ x: true }}
+                />
+              ),
+            },
+          ] : []),
+        ]}
       />
 
       {canManageInvites ? (

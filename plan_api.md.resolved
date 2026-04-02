@@ -1,0 +1,36 @@
+# Chi tiết thay đổi Backend API và Types
+
+File này mô tả các thay đổi về logic dữ liệu trên backend (`apps/api/src/routes/groups.ts` và `packages/types`).
+
+## 1. Cập nhật Shared Types (`packages/types`)
+- Sửa `createGroupSchema` và `updateGroupSchema` để gánh thêm giá trị `requireApproval: z.boolean().optional()`.
+- Thêm type/DTO mới: `GroupJoinRequestDto`.
+- Cập nhật kết quả trả về `GroupDto` để UI có thể hiển thị group này có bắt buộc phê duyệt hay không.
+
+## 2. Các API cần thêm mới
+- `GET /api/groups/:groupId/join-requests`
+  - Lấy danh sách các yêu cầu đang `PENDING`.
+  - Quyền truy cập: Chỉ hiển thị cho `LEADER` / `VICE_LEADER` hoặc Admin duyệt.
+
+- `POST /api/groups/:groupId/join-requests/:requestId/approve`
+  - Hành động: Quản trị viên chấp thuận cho user vào nhóm.
+  - Logic: Sửa request thành `APPROVED`, tạo một `GroupMember` cho user đó, và sinh ra bản ghi `GroupActivityLog`. 
+
+- `POST /api/groups/:groupId/join-requests/:requestId/reject`
+  - Hành động: Quản trị viên từ chối user vào nhóm.
+  - Logic: Sửa request thành `REJECTED`, sinh lịch sử vào `GroupActivityLog`.
+
+## 3. Các API cần chỉnh sửa logic
+- **Sửa API Tham gia (`POST /api/groups/join`)**:
+  - Khi user tham gia thông qua `inviteCode`, server sẽ truy vấn xem nhóm đó `requireApproval` bằng true hay false.
+  - Nếu `!requireApproval`: Lưu trực tiếp vào bảng `GroupMember` (đây là cách hoạt động hiện tại).
+  - Nếu `requireApproval`: 
+    - Tạo `GroupJoinRequest` status `PENDING`.
+    - Trả về mã phản hồi khác cho frontend biết là cần phải chờ duyệt (ví dụ: `joined: false, pendingApproval: true`).
+
+- **Sửa API Cập nhật nhóm (`PATCH /api/groups/:groupId`)**:
+  - Hỗ trợ cập nhật trường `requireApproval` bằng việc thay đổi từ Switch/Checkbox trên Admin Dashboard của Frontend.
+  - Quyền cập nhật nhóm: Chỉ `LEADER` (Admin) mới có quyền sửa cài đặt. (Logic này hiện tại đã có, tôi sẽ xác nhận nó hoạt động độc quyền cho LEADER).
+
+- **Kiểm định lại API Cấp quyền (`PATCH /api/groups/:groupId/members/:memberId`)**:
+  - Rà soát xác thực đảm bảo rằng `LEADER` có thể cấp quyền `LEADER` hoặc `VICE_LEADER` cho thành viên khác (được yêu cầu ở prompt gốc).

@@ -44,6 +44,7 @@ export const createGroupSchema = z.object({
   description: z.string().max(500).optional(),
   icon: z.string().max(120).optional(),
   color: z.string().max(32).optional(),
+  requireApproval: z.boolean().optional().default(false),
 })
 
 export const updateGroupSchema = z.object({
@@ -52,6 +53,7 @@ export const updateGroupSchema = z.object({
   avatarUrl: z.string().max(2000).optional().nullable(),
   icon: z.string().max(120).optional().nullable(),
   color: z.string().max(32).optional().nullable(),
+  requireApproval: z.boolean().optional(),
 })
 
 export const updateGroupFundSchema = z.object({

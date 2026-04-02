@@ -44,6 +44,7 @@ export default function GroupSettingsPage() {
   const [description, setDescription] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [iconData, setIconData] = useState<IconPickerValue>({ icon: 'mdi:account-group-outline', color: '#0073AA' })
+  const [requireApproval, setRequireApproval] = useState(false)
   const [fundEnabled, setFundEnabled] = useState(false)
   const [lowThreshold, setLowThreshold] = useState(0)
   const [dissolveName, setDissolveName] = useState('')
@@ -55,6 +56,7 @@ export default function GroupSettingsPage() {
       setDescription(group.description ?? '')
       setAvatarUrl(group.avatarUrl ?? null)
       setIconData({ icon: group.icon ?? 'mdi:account-group-outline', color: group.color ?? '#0073AA' })
+      setRequireApproval(group.requireApproval ?? false)
       setFundEnabled(group.fundBalance != null)
     }
   }, [group])
@@ -85,6 +87,7 @@ export default function GroupSettingsPage() {
         avatarUrl: finalAvatarUrl,
         icon: iconData.icon,
         color: iconData.color,
+        requireApproval,
       })
       setAvatarUrl(updated.avatarUrl ?? null)
       message.success('Đã lưu')
@@ -122,6 +125,15 @@ export default function GroupSettingsPage() {
           </Form.Item>
           <Form.Item label="Mô tả" className="!mb-6">
             <Input.TextArea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </Form.Item>
+          <Form.Item className="!mb-6" valuePropName="checked">
+            <div className="flex items-center gap-3">
+              <span>Bật phê duyệt thành viên mới</span>
+              <Switch checked={requireApproval} onChange={setRequireApproval} />
+            </div>
+            <Typography.Text type="secondary" className="block text-sm">
+              Người tham gia bằng mã mời sẽ cần chờ Quản trị viên duyệt mới được vào nhóm.
+            </Typography.Text>
           </Form.Item>
           <Button
             type="primary"

@@ -1,0 +1,88 @@
+# Chi tiết cụ thể về cấu trúc DB (Prisma Schema)
+
+Dưới đây là các phần CODE CHÍNH XÁC sẽ được chèn/sửa bên trong file `packages/database/prisma/schema.prisma`:
+
+## 1. Mở rộng Model `Group`
+
+Chúng ta sẽ tìm đến đoạn khai báo `model Group` ở dòng 210 và bổ sung trường `requireApproval` (được dùng để admin quản lý nhóm đó có cần duyệt tự động không) cũng như khoá ngoại nối đến `GroupJoinRequest`. 
+
+```diff
+ model Group {
+   id            String    @id @default(cuid())
+   name          String
+   description   String?
+   avatarUrl     String?
+   icon          String?
+   color         String?
+   inviteCode    String    @unique @default(cuid())
+   inviteEnabled Boolean   @default(true)
+   inviteExpires DateTime?
+   isActive      Boolean   @default(true)
++  requireApproval Boolean @default(false)
+   createdAt     DateTime  @default(now())
+   updatedAt     DateTime  @updatedAt
+ 
+   members      GroupMember[]
+   expenses     Expense[]
+   settlements  Settlement[]
+   fund         GroupFund?
+   auditLogs    AuditLog[]
+   activityLogs GroupActivityLog[]
+   invites      GroupInvite[]
++  joinRequests GroupJoinRequest[]
+ 
+   @@index([inviteCode])
+ }
+```
+**Giải thích cụ thể:**
+- `requireApproval Boolean @default(false)`: Nếu nhóm này do user A tạo ra, mặc định bất kỳ ai biết `inviteCode` đều được vào luôn (`false`). Nếu Admin sửa nó thành `true`, user B biết `inviteCode` thì chỉ được tạo một Yêu cầu chờ duyệt.
+
+## 2. Thêm Enum `JoinRequestStatus`
+
+Chúng ta cần thiết lập các giới hạn trạng thái của một yêu cầu. Thêm enum này ở phần trên cùng của file (khu vực **ENUMS**):
+
+```prisma
+enum JoinRequestStatus {
+  PENDING   // Đang chờ Admin nhóm phản hồi
+  APPROVED  // Đã được chấp thuận (Sẽ sinh tiếp thành viên GroupMember sau đó)
+  REJECTED  // Đã bị từ chối
+}
+```
+
+## 3. Thêm Model Mới `GroupJoinRequest`
+
+Cần lưu trữ trạng thái người dùng khi họ chưa được gọi là thành viên. Thêm model `GroupJoinRequest` bên cạnh model `GroupMember` (Tầm dòng 252+):
+
+```prisma
+// ═══════════════════════════════════════════
+// JOIN REQUEST (Yêu cầu tham gia nhóm chờ phê duyệt)
+// ═══════════════════════════════════════════
+
+model GroupJoinRequest {
+  id        String            @id @default(cuid())
+  groupId   String
+  userId    String
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Mỗi khoảnh khắc user chỉ được tạo tối đa 1 yêu cầu PENDING tại cổng vào nhóm đó
+  @@unique([groupId, userId])
+  @@index([groupId, status])
+}
+```
+**Giải thích cụ thể:**
+- `userId` liên kết với người dùng gửi đơn.
+- Các API Frontend sẽ có quyền gọi lên Backend để xem liệu `group` này đang có các `GroupJoinRequest` nào ở trạng thái `PENDING` không. (Nếu là Admin gọi).
+
+## 4. Quá trình thao tác Database khi duyệt / từ chối
+
+Khi viết API ở Backend, việc thao tác với Database sẽ tuân thủ nguyên tắc Transaction (Giao dịch đồng thời):
+- **Trường hợp Chấp thuận (Approve):**
+  1. Cập nhật `status = APPROVED` trong dòng `GroupJoinRequest`.
+  2. `INSERT` người dùng đó vào bảng `GroupMember` với `role = MEMBER`.
+- **Trường hợp Từ chối (Reject):**
+  1. Đổi `status = REJECTED` trong dòng `GroupJoinRequest`. Người dùng sẽ phải xin lại nếu muốn vào nhóm lần sau.
