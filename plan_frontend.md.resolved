@@ -1,0 +1,21 @@
+# Chi tiết thay đổi Frontend (Giao diện Web)
+
+File này mô tả các tính năng frontend cần bổ sung để tích hợp được cơ chế duyệt thành viên mới tạo ra từ Backend.
+
+## 1. Cài đặt nhóm (Settings)
+- Tại trang quản lý cấu hình nhóm (Chỉ hiển thị với Admin / LEADER), bổ sung **Switch / Checkbox** "Bật phê duyệt thành viên".
+- Checkbox này sẽ liên kết API `PATCH /api/groups/:groupId` để cập nhật trạng thái trường `requireApproval`.
+
+## 2. Quản lý Yêu cầu (Join Requests)
+- Tại trang "Thành viên" của nhóm (Chỉ Admin nhìn thấy list này), cung cấp một tab/phần "Chờ phê duyệt".
+- Giao diện này sẽ gọi API GET `/api/groups/:groupId/join-requests` để lấy danh sách user xin vào.
+- Từng item (người xin) sẽ có 2 nút:
+  - **Chấp thuận**: Kích hoạt API POST `.../approve`.
+  - **Từ chối**: Kích hoạt API POST `.../reject`.
+
+## 3. Khách tham gia (Join via Invite Code)
+- Khi một user không nằm trong nhóm nhập invite code ở màn hình tham gia, nếu Backend trả về field `pendingApproval: true`. UI sẽ hiển thị Dialog / Toast: *"Yêu cầu tham gia của bạn đã được gửi. Vui lòng đợi quản trị viên phê duyệt."* thay vì ngay lập tức chuyển hướng vào trang chi tiết nhóm.
+
+---
+Về việc giới hạn các chức năng tuỳ vào Role (Admin hay Member thường):
+- Hiện tại UI đã tự động ẩn đi nút Setting, Tuỳ chỉnh Quỹ hay Sửa/Xoá thành viên đối với những tài khoản không phải là LEADER nhờ vào thuộc tính `role` trả về từ Backend. Chúng tôi sẽ đảm bảo bạn cấp phân quyền (`PATCH .../role` thành LEADER) là người kia có đủ mọi quyền y hệt bạn.

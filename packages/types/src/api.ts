@@ -42,6 +42,7 @@ export interface GroupDto {
   inviteExpires: string | null
   /** Nhóm còn hoạt động hay bị quản trị tạm khóa. */
   isActive: boolean
+  requireApproval: boolean
   memberCount: number
   myRole: string
   fundBalance: string | null
@@ -82,6 +83,15 @@ export interface PendingGroupInviteDto {
   createdAt: string
   invitee: Pick<UserDto, 'id' | 'name' | 'email' | 'avatarUrl'>
   invitedBy: Pick<UserDto, 'id' | 'name' | 'email'>
+}
+
+export interface GroupJoinRequestDto {
+  id: string
+  groupId: string
+  userId: string
+  status: string
+  createdAt: string
+  user: Pick<UserDto, 'id' | 'name' | 'email' | 'avatarUrl'>
 }
 
 export interface GroupMembersListDto {

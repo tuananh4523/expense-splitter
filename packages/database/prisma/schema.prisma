@@ -60,7 +60,9 @@ enum NotificationType {
   EXPENSE_ADDED
   STANDALONE_REQUESTED
   GROUP_INVITE
-  /** Thông báo toàn hệ thống từ quản trị (một broadcastId chung cho mọi user nhận). */
+  /**
+   * Thông báo toàn hệ thống từ quản trị (một broadcastId chung cho mọi user nhận).
+   */
   SYSTEM_ANNOUNCEMENT
 }
 
@@ -69,6 +71,12 @@ enum GroupInviteStatus {
   ACCEPTED
   DECLINED
   CANCELLED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum FeedbackType {
@@ -100,35 +108,36 @@ enum FundContributionStatus {
 // ═══════════════════════════════════════════
 
 model User {
-  id                     String    @id @default(cuid())
-  email                  String    @unique
-  name                   String
-  avatarUrl              String?
-  passwordHash           String
-  role                   Role      @default(USER)
-  isActive               Boolean   @default(true)
-  lastLoginAt            DateTime?
-  passwordResetToken     String?   @unique
-  passwordResetExpires   DateTime?
-  mustChangePassword     Boolean   @default(false)
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  name                 String
+  avatarUrl            String?
+  passwordHash         String
+  role                 Role      @default(USER)
+  isActive             Boolean   @default(true)
+  lastLoginAt          DateTime?
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+  mustChangePassword   Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  profile       UserProfile?
-  memberships   GroupMember[]
-  paidExpenses      Expense[]         @relation("ExpensePayer")
-  splits            ExpenseSplit[]
-  comments          Comment[]
-  notifications     Notification[]
-  fundContributions      FundTransaction[] @relation("FundContributor")
-  reviewedFundContributions FundTransaction[] @relation("FundContributionReviewer")
-  paymentsSent      PaymentRecord[]   @relation("PaymentSender")
-  paymentsReceived  PaymentRecord[]   @relation("PaymentReceiver")
-  auditLogs         AuditLog[]
-  groupInvitesReceived GroupInvite[]  @relation("GroupInviteInvitee")
-  groupInvitesSent     GroupInvite[]  @relation("GroupInviteInviter")
-  feedbacks            Feedback[]
-  sessions             UserSession[]
+  profile                   UserProfile?
+  memberships               GroupMember[]
+  paidExpenses              Expense[]          @relation("ExpensePayer")
+  splits                    ExpenseSplit[]
+  comments                  Comment[]
+  notifications             Notification[]
+  fundContributions         FundTransaction[]  @relation("FundContributor")
+  reviewedFundContributions FundTransaction[]  @relation("FundContributionReviewer")
+  paymentsSent              PaymentRecord[]    @relation("PaymentSender")
+  paymentsReceived          PaymentRecord[]    @relation("PaymentReceiver")
+  auditLogs                 AuditLog[]
+  groupInvitesReceived      GroupInvite[]      @relation("GroupInviteInvitee")
+  groupInvitesSent          GroupInvite[]      @relation("GroupInviteInviter")
+  feedbacks                 Feedback[]
+  sessions                  UserSession[]
+  groupJoinRequests         GroupJoinRequest[]
 
   @@index([email])
 }
@@ -152,7 +161,9 @@ model UserProfile {
   userId    String   @unique
   bio       String?
   phone     String?
-  /** Bảng màu giao diện (id theme UI, ví dụ fresh, ocean) */
+  /**
+   * Bảng màu giao diện (id theme UI, ví dụ fresh, ocean)
+   */
   uiTheme   String   @default("fresh")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,7 +179,9 @@ model BankAccount {
   bankName      String
   accountNumber String
   accountName   String
-  /** URL lưu trữ ảnh mã QR (cùng định dạng viewUrl MinIO như avatar). */
+  /**
+   * URL lưu trữ ảnh mã QR (cùng định dạng viewUrl MinIO như avatar).
+   */
   qrImageUrl    String?
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
@@ -202,26 +215,28 @@ model Category {
 // ═══════════════════════════════════════════
 
 model Group {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  avatarUrl   String?
-  icon        String?
-  color       String?
-  inviteCode    String    @unique @default(cuid())
-  inviteEnabled Boolean   @default(true)
-  inviteExpires DateTime?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  avatarUrl       String?
+  icon            String?
+  color           String?
+  inviteCode      String    @unique @default(cuid())
+  inviteEnabled   Boolean   @default(true)
+  inviteExpires   DateTime?
+  isActive        Boolean   @default(true)
+  requireApproval Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  members     GroupMember[]
-  expenses    Expense[]
-  settlements Settlement[]
+  members      GroupMember[]
+  expenses     Expense[]
+  settlements  Settlement[]
   fund         GroupFund?
   auditLogs    AuditLog[]
   activityLogs GroupActivityLog[]
   invites      GroupInvite[]
+  joinRequests GroupJoinRequest[]
 
   @@index([inviteCode])
 }
@@ -241,6 +256,26 @@ model GroupInvite {
 
   @@index([groupId, status])
   @@index([inviteeUserId, status])
+}
+
+// ═══════════════════════════════════════════
+// JOIN REQUEST (Yêu cầu tham gia nhóm chờ phê duyệt)
+// ═══════════════════════════════════════════
+
+model GroupJoinRequest {
+  id        String            @id @default(cuid())
+  groupId   String
+  userId    String
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId, status])
+  @@index([userId, status])
 }
 
 model GroupMember {
@@ -282,7 +317,9 @@ model Expense {
   expenseDate  DateTime      @default(now())
   tags         String[]      @default([])
   imageUrls    String[]      @default([])
-  /** Đợt tổng kết (PENDING) đang khóa chi này; chi mới sau khi tạo đợt = null → không thuộc đợt cũ */
+  /**
+   * Đợt tổng kết (PENDING) đang khóa chi này; chi mới sau khi tạo đợt = null → không thuộc đợt cũ
+   */
   settlementId String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -433,20 +470,22 @@ model GroupFund {
 }
 
 model FundTransaction {
-  id                  String                   @id @default(cuid())
-  fundId              String
-  userId              String
-  type                FundTransactionType
-  amount              Decimal                  @db.Decimal(12, 2)
-  note                String?
-  relatedExpenseId    String?
-  /** Chỉ giao dịch CONTRIBUTE: PENDING → chờ duyệt; APPROVED/REJECTED. DEDUCT/REFUND = null. */
-  contributionStatus  FundContributionStatus?
-  proofImageUrls      String[]                 @default([])
-  reviewedByUserId    String?
-  reviewedAt          DateTime?
-  reviewNote          String?
-  createdAt           DateTime                 @default(now())
+  id                 String                  @id @default(cuid())
+  fundId             String
+  userId             String
+  type               FundTransactionType
+  amount             Decimal                 @db.Decimal(12, 2)
+  note               String?
+  relatedExpenseId   String?
+  /**
+   * Chỉ giao dịch CONTRIBUTE: PENDING → chờ duyệt; APPROVED/REJECTED. DEDUCT/REFUND = null.
+   */
+  contributionStatus FundContributionStatus?
+  proofImageUrls     String[]                @default([])
+  reviewedByUserId   String?
+  reviewedAt         DateTime?
+  reviewNote         String?
+  createdAt          DateTime                @default(now())
 
   fund       GroupFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
   user       User      @relation("FundContributor", fields: [userId], references: [id])
@@ -492,7 +531,9 @@ model Notification {
   isRead       Boolean          @default(false)
   data         Json?
   settlementId String?
-  /** Cùng giá trị cho mọi user trong một đợt gửi từ quản trị (SYSTEM_ANNOUNCEMENT). */
+  /**
+   * Cùng giá trị cho mọi user trong một đợt gửi từ quản trị (SYSTEM_ANNOUNCEMENT).
+   */
   broadcastId  String?
   createdAt    DateTime         @default(now())
 
@@ -510,17 +551,17 @@ model Notification {
 // ═══════════════════════════════════════════
 
 model GroupActivityLog {
-  id           String   @id @default(cuid())
-  groupId      String
-  actorUserId  String?
-  actorName    String
-  actorEmail   String
-  action       String
-  summary      String
-  targetType   String?
-  targetId     String?
-  metadata     Json?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  groupId     String
+  actorUserId String?
+  actorName   String
+  actorEmail  String
+  action      String
+  summary     String
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
@@ -533,17 +574,17 @@ model GroupActivityLog {
 // ═══════════════════════════════════════════
 
 model Feedback {
-  id        String          @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String
   type      FeedbackType
-  status    FeedbackStatus  @default(NEW)
+  status    FeedbackStatus @default(NEW)
   rating    Int?
   title     String?
-  body      String?         @db.Text
-  imageUrls String[]        @default([])
-  adminNote String?         @db.Text
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  body      String?        @db.Text
+  imageUrls String[]       @default([])
+  adminNote String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

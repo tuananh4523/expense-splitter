@@ -165,8 +165,8 @@ export function SplitConfig({
                       disabled={r.isExcluded}
                       value={r.amount ?? null}
                       onChange={(v) => setAmount(r.userId, typeof v === 'number' ? v : null)}
-                      formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(v) => Number(v?.replace(/,/g, '') ?? 0)}
+                      formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                      parser={(v) => Number(`${v}`.replace(/\./g, '')) || 0}
                     />
                   ),
                 }
