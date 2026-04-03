@@ -1,3 +1,4 @@
+import { ExpenseCharts } from '@/components/dashboard/ExpenseCharts'
 import { GroupCard } from '@/components/groups/GroupCard'
 import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
@@ -116,7 +117,9 @@ export default function DashboardPage() {
         </Typography.Paragraph>
       ) : null}
 
-      <section className="mb-8">
+      <ExpenseCharts />
+
+      {/* <section className="mb-8">
         <Typography.Title level={5} className="!mb-3 !mt-0">
           Nhóm bạn quản lý
         </Typography.Title>
@@ -141,9 +144,9 @@ export default function DashboardPage() {
             }}
           />
         )}
-      </section>
+      </section> */}
 
-      <section>
+      {/* <section>
         <Typography.Title level={5} className="!mb-3 !mt-0">
           Nhóm tham gia
         </Typography.Title>
@@ -158,7 +161,7 @@ export default function DashboardPage() {
         ) : (
           <Typography.Text type="secondary">Bạn chưa tham gia nhóm nào với vai trò thành viên.</Typography.Text>
         )}
-      </section>
+      </section> */}
     </AppLayout>
   )
 }
