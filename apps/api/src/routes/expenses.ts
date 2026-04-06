@@ -1,4 +1,5 @@
-import { prisma, Prisma } from '@expense/database'
+import { Prisma, prisma } from '@expense/database'
+import type { GroupMember } from '@expense/database'
 import {
   acceptPaymentSchema,
   addCommentSchema,
@@ -16,11 +17,11 @@ import type {
 } from '@expense/types'
 import { Hono } from 'hono'
 import { formatVndForSummary } from '../lib/format-vnd.js'
-import { findGroupLeaderIncludingFormer, runGroupSubresourceGate } from '../lib/group-gate.js'
 import { actorSnapshot, writeGroupActivityLog } from '../lib/group-activity-log.js'
+import { findGroupLeaderIncludingFormer, runGroupSubresourceGate } from '../lib/group-gate.js'
 import { signedStorageUrlForUser } from '../lib/minio.js'
+import { clientIp } from '../lib/requestMeta.js'
 import { requireAuth } from '../middleware/auth.js'
-import type { GroupMember } from '@expense/database'
 
 const activeMemberWhere = { isActive: true, leftAt: null } as const
 
@@ -276,8 +277,13 @@ groupExpenseRoutes.get('/', async (c) => {
     isStandalone,
     standaloneIncomplete,
     settlementId: filterSettlementId,
+    includeDeleted,
   } = q.data
   const where: Prisma.ExpenseWhereInput = { groupId }
+  // Default: hide soft-deleted expenses (admin can opt in).
+  if (!(adminBrowse && includeDeleted)) {
+    where.deletedAt = null
+  }
   const dateFilter: Prisma.DateTimeFilter = {}
   if (dateFrom) dateFilter.gte = new Date(dateFrom)
   if (dateTo) dateFilter.lte = new Date(dateTo)
@@ -359,7 +365,12 @@ groupExpenseRoutes.post('/', async (c) => {
   }
 
   const total = new Prisma.Decimal(d.amount)
-  let splitRows: { userId: string; amount: Prisma.Decimal; percentage: Prisma.Decimal | null; isExcluded: boolean }[]
+  let splitRows: {
+    userId: string
+    amount: Prisma.Decimal
+    percentage: Prisma.Decimal | null
+    isExcluded: boolean
+  }[]
 
   if (d.splitType === 'EQUAL') {
     const splitsIn = d.splits?.length
@@ -394,7 +405,9 @@ groupExpenseRoutes.post('/', async (c) => {
       percentage: null,
       isExcluded: Boolean(s.isExcluded),
     }))
-    const sum = splitRows.filter((s) => !s.isExcluded).reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
+    const sum = splitRows
+      .filter((s) => !s.isExcluded)
+      .reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
     if (sum.sub(total).abs().gt(new Prisma.Decimal(0.01))) {
       return c.json({ error: 'Tổng phần chia phải bằng số tiền' }, 400)
     }
@@ -406,7 +419,9 @@ groupExpenseRoutes.post('/', async (c) => {
       percentage: new Prisma.Decimal(s.percentage ?? 0),
       isExcluded: Boolean(s.isExcluded),
     }))
-    const sum = splitRows.filter((s) => !s.isExcluded).reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
+    const sum = splitRows
+      .filter((s) => !s.isExcluded)
+      .reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
     if (sum.sub(total).abs().gt(new Prisma.Decimal(0.01))) {
       return c.json({ error: 'Tổng phần trăm phải đạt 100%' }, 400)
     }
@@ -480,6 +495,13 @@ groupExpenseRoutes.post('/', async (c) => {
         groupId,
         expenseId: ex.id,
         action: 'EXPENSE_CREATED',
+        after: {
+          title: ex.title,
+          amount: String(ex.amount),
+          status: ex.status,
+          isStandalone: ex.isStandalone,
+        },
+        ipAddress: clientIp(c) || null,
       },
     })
 
@@ -521,7 +543,7 @@ groupExpenseRoutes.get('/:expenseId/comments', async (c) => {
   const m = c.get('groupMember')
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId } })
+  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId, deletedAt: null } })
   if (!ex) return c.json({ error: 'Không tìm thấy' }, 404)
 
   const list = await prisma.comment.findMany({
@@ -539,7 +561,7 @@ groupExpenseRoutes.post('/:expenseId/comments', async (c) => {
   const m = c.get('groupMember')
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId } })
+  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId, deletedAt: null } })
   if (!ex) return c.json({ error: 'Không tìm thấy' }, 404)
 
   let body: unknown
@@ -588,7 +610,7 @@ groupExpenseRoutes.get('/:expenseId/audit', async (c) => {
   const m = c.get('groupMember')
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId } })
+  const ex = await prisma.expense.findFirst({ where: { id: expenseId, groupId, deletedAt: null } })
   if (!ex) return c.json({ error: 'Không tìm thấy' }, 404)
 
   const [activities, audits] = await Promise.all([
@@ -635,7 +657,7 @@ groupExpenseRoutes.get('/:expenseId/standalone', async (c) => {
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
   const ex = await prisma.expense.findFirst({
-    where: { id: expenseId, groupId, isStandalone: true },
+    where: { id: expenseId, groupId, isStandalone: true, deletedAt: null },
     include: {
       splits: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
       category: true,
@@ -709,170 +731,179 @@ groupExpenseRoutes.post('/:expenseId/standalone/payments/:paymentRecordId/confir
   return c.json({ data: { ok: true } })
 })
 
-groupExpenseRoutes.post('/:expenseId/standalone/payments/:paymentRecordId/reopen-after-reject', async (c) => {
-  const userId = c.get('userId')
-  const groupId = c.get('groupId')
-  const expenseId = c.req.param('expenseId')
-  const paymentRecordId = c.req.param('paymentRecordId')
-  const m = c.get('groupMember')
-  if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+groupExpenseRoutes.post(
+  '/:expenseId/standalone/payments/:paymentRecordId/reopen-after-reject',
+  async (c) => {
+    const userId = c.get('userId')
+    const groupId = c.get('groupId')
+    const expenseId = c.req.param('expenseId')
+    const paymentRecordId = c.req.param('paymentRecordId')
+    const m = c.get('groupMember')
+    if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const rec = await prisma.paymentRecord.findFirst({
-    where: { id: paymentRecordId, standalonePayment: { expenseId } },
-    include: {
-      standalonePayment: { include: { expense: { select: { title: true } } } },
-      payer: { select: { name: true } },
-    },
-  })
-  if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
-  if (rec.status !== 'REJECTED') {
-    return c.json({ error: 'Chỉ mở lại khi thanh toán đã bị từ chối' }, 400)
-  }
-
-  const leader = await findGroupLeaderIncludingFormer(groupId, userId)
-  const isPayer = rec.payerUserId === userId
-  if (!leader && !isPayer) return c.json({ error: 'Không có quyền' }, 403)
-
-  await prisma.paymentRecord.update({
-    where: { id: rec.id },
-    data: {
-      status: 'PENDING',
-      proofImageUrls: [],
-      payerComment: null,
-      confirmedAt: null,
-      acceptedAt: null,
-      rejectedAt: null,
-    },
-  })
-
-  if (leader && !isPayer) {
-    const title = rec.standalonePayment.expense.title
-    await prisma.notification.create({
-      data: {
-        userId: rec.payerUserId,
-        type: 'PAYMENT_REQUEST',
-        title: 'Yêu cầu thanh toán lại (chi riêng)',
-        body: `Trưởng nhóm yêu cầu bạn nộp lại chứng từ cho khoản «${title}».`,
-        data: {
-          groupId,
-          expenseId,
-          paymentRecordId: rec.id,
-          kind: 'standalone_reopen',
-        },
+    const rec = await prisma.paymentRecord.findFirst({
+      where: { id: paymentRecordId, standalonePayment: { expenseId } },
+      include: {
+        standalonePayment: { include: { expense: { select: { title: true } } } },
+        payer: { select: { name: true } },
       },
     })
-  }
+    if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
+    if (rec.status !== 'REJECTED') {
+      return c.json({ error: 'Chỉ mở lại khi thanh toán đã bị từ chối' }, 400)
+    }
 
-  return c.json({ data: { ok: true } })
-})
+    const leader = await findGroupLeaderIncludingFormer(groupId, userId)
+    const isPayer = rec.payerUserId === userId
+    if (!leader && !isPayer) return c.json({ error: 'Không có quyền' }, 403)
 
-groupExpenseRoutes.post('/:expenseId/standalone/payments/:paymentRecordId/request-review', async (c) => {
-  const userId = c.get('userId')
-  const groupId = c.get('groupId')
-  const expenseId = c.req.param('expenseId')
-  const paymentRecordId = c.req.param('paymentRecordId')
-  const m = c.get('groupMember')
-  if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+    await prisma.paymentRecord.update({
+      where: { id: rec.id },
+      data: {
+        status: 'PENDING',
+        proofImageUrls: [],
+        payerComment: null,
+        confirmedAt: null,
+        acceptedAt: null,
+        rejectedAt: null,
+      },
+    })
 
-  const rec = await prisma.paymentRecord.findFirst({
-    where: { id: paymentRecordId, standalonePayment: { expenseId } },
-    include: {
-      payer: { select: { name: true } },
-      standalonePayment: { include: { expense: { select: { title: true } } } },
-    },
-  })
-  if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
-  if (rec.payerUserId !== userId) return c.json({ error: 'Chỉ người trả mới gửi nhắc được' }, 403)
-  if (rec.status !== 'CONFIRMED') return c.json({ error: 'Chỉ gửi nhắc khi đã nộp chứng từ' }, 400)
-
-  const leaders = await prisma.groupMember.findMany({
-    where: { groupId, role: 'LEADER', isActive: true, leftAt: null },
-    select: { userId: true },
-  })
-  const targets = new Set<string>([rec.receiverUserId, ...leaders.map((l) => l.userId)])
-  targets.delete(userId)
-  if (targets.size === 0) return c.json({ error: 'Không có người nhận thông báo' }, 400)
-
-  const title = 'Nhắc xác nhận thanh toán (chi riêng)'
-  const expenseTitle = rec.standalonePayment.expense.title
-  const body = `${rec.payer.name} nhờ bạn xem chứng từ và duyệt khoản «${expenseTitle}».`
-
-  const targetList = [...targets]
-  await Promise.all(
-    targetList.map((uid) =>
-      prisma.notification.create({
+    if (leader && !isPayer) {
+      const title = rec.standalonePayment.expense.title
+      await prisma.notification.create({
         data: {
-          userId: uid,
+          userId: rec.payerUserId,
           type: 'PAYMENT_REQUEST',
-          title,
-          body,
+          title: 'Yêu cầu thanh toán lại (chi riêng)',
+          body: `Trưởng nhóm yêu cầu bạn nộp lại chứng từ cho khoản «${title}».`,
           data: {
             groupId,
             expenseId,
             paymentRecordId: rec.id,
-            kind: 'standalone',
+            kind: 'standalone_reopen',
           },
         },
-      }),
-    ),
-  )
+      })
+    }
 
-  return c.json({ data: { ok: true, notified: targetList.length } })
-})
+    return c.json({ data: { ok: true } })
+  },
+)
+
+groupExpenseRoutes.post(
+  '/:expenseId/standalone/payments/:paymentRecordId/request-review',
+  async (c) => {
+    const userId = c.get('userId')
+    const groupId = c.get('groupId')
+    const expenseId = c.req.param('expenseId')
+    const paymentRecordId = c.req.param('paymentRecordId')
+    const m = c.get('groupMember')
+    if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+
+    const rec = await prisma.paymentRecord.findFirst({
+      where: { id: paymentRecordId, standalonePayment: { expenseId } },
+      include: {
+        payer: { select: { name: true } },
+        standalonePayment: { include: { expense: { select: { title: true } } } },
+      },
+    })
+    if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
+    if (rec.payerUserId !== userId) return c.json({ error: 'Chỉ người trả mới gửi nhắc được' }, 403)
+    if (rec.status !== 'CONFIRMED')
+      return c.json({ error: 'Chỉ gửi nhắc khi đã nộp chứng từ' }, 400)
+
+    const leaders = await prisma.groupMember.findMany({
+      where: { groupId, role: 'LEADER', isActive: true, leftAt: null },
+      select: { userId: true },
+    })
+    const targets = new Set<string>([rec.receiverUserId, ...leaders.map((l) => l.userId)])
+    targets.delete(userId)
+    if (targets.size === 0) return c.json({ error: 'Không có người nhận thông báo' }, 400)
+
+    const title = 'Nhắc xác nhận thanh toán (chi riêng)'
+    const expenseTitle = rec.standalonePayment.expense.title
+    const body = `${rec.payer.name} nhờ bạn xem chứng từ và duyệt khoản «${expenseTitle}».`
+
+    const targetList = [...targets]
+    await Promise.all(
+      targetList.map((uid) =>
+        prisma.notification.create({
+          data: {
+            userId: uid,
+            type: 'PAYMENT_REQUEST',
+            title,
+            body,
+            data: {
+              groupId,
+              expenseId,
+              paymentRecordId: rec.id,
+              kind: 'standalone',
+            },
+          },
+        }),
+      ),
+    )
+
+    return c.json({ data: { ok: true, notified: targetList.length } })
+  },
+)
 
 /** Người nhận / trưởng nhóm nhắc người trả chuyển tiền (khi còn PENDING). */
-groupExpenseRoutes.post('/:expenseId/standalone/payments/:paymentRecordId/notify-payer', async (c) => {
-  const userId = c.get('userId')
-  const groupId = c.get('groupId')
-  const expenseId = c.req.param('expenseId')
-  const paymentRecordId = c.req.param('paymentRecordId')
-  const m = c.get('groupMember')
-  if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+groupExpenseRoutes.post(
+  '/:expenseId/standalone/payments/:paymentRecordId/notify-payer',
+  async (c) => {
+    const userId = c.get('userId')
+    const groupId = c.get('groupId')
+    const expenseId = c.req.param('expenseId')
+    const paymentRecordId = c.req.param('paymentRecordId')
+    const m = c.get('groupMember')
+    if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const rec = await prisma.paymentRecord.findFirst({
-    where: { id: paymentRecordId, standalonePayment: { expenseId } },
-    include: {
-      payer: { select: { name: true } },
-      receiver: { select: { name: true } },
-      standalonePayment: { include: { expense: { select: { title: true } } } },
-    },
-  })
-  if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
-  if (rec.status !== 'PENDING') {
-    return c.json({ error: 'Chỉ nhắc khi khoản đang chờ người trả xác nhận chuyển tiền' }, 400)
-  }
-
-  const isReceiver = rec.receiverUserId === userId
-  const isLeader = m.role === 'LEADER'
-  if (!isReceiver && !isLeader) {
-    return c.json({ error: 'Chỉ người nhận tiền hoặc trưởng nhóm mới gửi nhắc' }, 403)
-  }
-  if (rec.payerUserId === userId) {
-    return c.json({ error: 'Người trả không gửi nhắc cho chính mình' }, 400)
-  }
-
-  const expenseTitle = rec.standalonePayment.expense.title
-  const who =
-    isLeader && !isReceiver ? 'Trưởng nhóm' : rec.receiver.name
-  const body = `${who} nhắc bạn chuyển tiền cho khoản «${expenseTitle}» (chi tiêu riêng).`
-
-  await prisma.notification.create({
-    data: {
-      userId: rec.payerUserId,
-      type: 'PAYMENT_REQUEST',
-      title: 'Nhắc chuyển tiền (chi riêng)',
-      body,
-      data: {
-        groupId,
-        expenseId,
-        paymentRecordId: rec.id,
-        kind: 'standalone_pay_reminder',
+    const rec = await prisma.paymentRecord.findFirst({
+      where: { id: paymentRecordId, standalonePayment: { expenseId } },
+      include: {
+        payer: { select: { name: true } },
+        receiver: { select: { name: true } },
+        standalonePayment: { include: { expense: { select: { title: true } } } },
       },
-    },
-  })
+    })
+    if (!rec?.standalonePayment) return c.json({ error: 'Không tìm thấy' }, 404)
+    if (rec.status !== 'PENDING') {
+      return c.json({ error: 'Chỉ nhắc khi khoản đang chờ người trả xác nhận chuyển tiền' }, 400)
+    }
 
-  return c.json({ data: { ok: true, notified: 1 } })
-})
+    const isReceiver = rec.receiverUserId === userId
+    const isLeader = m.role === 'LEADER'
+    if (!isReceiver && !isLeader) {
+      return c.json({ error: 'Chỉ người nhận tiền hoặc trưởng nhóm mới gửi nhắc' }, 403)
+    }
+    if (rec.payerUserId === userId) {
+      return c.json({ error: 'Người trả không gửi nhắc cho chính mình' }, 400)
+    }
+
+    const expenseTitle = rec.standalonePayment.expense.title
+    const who = isLeader && !isReceiver ? 'Trưởng nhóm' : rec.receiver.name
+    const body = `${who} nhắc bạn chuyển tiền cho khoản «${expenseTitle}» (chi tiêu riêng).`
+
+    await prisma.notification.create({
+      data: {
+        userId: rec.payerUserId,
+        type: 'PAYMENT_REQUEST',
+        title: 'Nhắc chuyển tiền (chi riêng)',
+        body,
+        data: {
+          groupId,
+          expenseId,
+          paymentRecordId: rec.id,
+          kind: 'standalone_pay_reminder',
+        },
+      },
+    })
+
+    return c.json({ data: { ok: true, notified: 1 } })
+  },
+)
 
 groupExpenseRoutes.post('/:expenseId/standalone/payments/accept', async (c) => {
   const userId = c.get('userId')
@@ -906,7 +937,10 @@ groupExpenseRoutes.post('/:expenseId/standalone/payments/accept', async (c) => {
   if (rec.status === 'PENDING') {
     if (userId === rec.payerUserId) {
       return c.json(
-        { error: 'Người trả vui lòng dùng «Xác nhận đã chuyển» kèm ảnh chứng từ, không dùng xác nhận phía người nhận' },
+        {
+          error:
+            'Người trả vui lòng dùng «Xác nhận đã chuyển» kèm ảnh chứng từ, không dùng xác nhận phía người nhận',
+        },
         403,
       )
     }
@@ -915,7 +949,10 @@ groupExpenseRoutes.post('/:expenseId/standalone/payments/accept', async (c) => {
     }
     if (!parsed.data.accepted) {
       return c.json(
-        { error: 'Khi chưa có chứng từ từ người trả, chỉ có thể xác nhận đã nhận tiền (không từ chối ở bước này)' },
+        {
+          error:
+            'Khi chưa có chứng từ từ người trả, chỉ có thể xác nhận đã nhận tiền (không từ chối ở bước này)',
+        },
         400,
       )
     }
@@ -984,7 +1021,7 @@ groupExpenseRoutes.get('/:expenseId', async (c) => {
 
   const [e, creatorLog] = await Promise.all([
     prisma.expense.findFirst({
-      where: { id: expenseId, groupId },
+      where: { id: expenseId, groupId, deletedAt: null },
       include: {
         splits: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
         category: true,
@@ -1007,7 +1044,11 @@ groupExpenseRoutes.get('/:expenseId', async (c) => {
       }
     : null
   return c.json({
-    data: await toExpenseDtoWithSignedAvatars(e, c.get('userId'), createdBy ? { createdBy } : undefined),
+    data: await toExpenseDtoWithSignedAvatars(
+      e,
+      c.get('userId'),
+      createdBy ? { createdBy } : undefined,
+    ),
   })
 })
 
@@ -1019,7 +1060,7 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
   const existing = await prisma.expense.findFirst({
-    where: { id: expenseId, groupId },
+    where: { id: expenseId, groupId, deletedAt: null },
     include: { standalonePayment: { include: { paymentRecords: true } } },
   })
   if (!existing) return c.json({ error: 'Không tìm thấy' }, 404)
@@ -1041,7 +1082,14 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
   const d = parsed.data
 
   // Build split rows if splits/splitType provided
-  let splitRows: { userId: string; amount: Prisma.Decimal; percentage: Prisma.Decimal | null; isExcluded: boolean }[] | null = null
+  let splitRows:
+    | {
+        userId: string
+        amount: Prisma.Decimal
+        percentage: Prisma.Decimal | null
+        isExcluded: boolean
+      }[]
+    | null = null
   if (d.splits?.length && d.splitType) {
     const total = new Prisma.Decimal(d.amount ?? existing.amount)
     const splitType = d.splitType
@@ -1053,7 +1101,13 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
       let given = new Prisma.Decimal(0)
       let activeIndex = 0
       splitRows = d.splits.map((s) => {
-        if (s.isExcluded) return { userId: s.userId, amount: new Prisma.Decimal(0), percentage: null, isExcluded: true }
+        if (s.isExcluded)
+          return {
+            userId: s.userId,
+            amount: new Prisma.Decimal(0),
+            percentage: null,
+            isExcluded: true,
+          }
         activeIndex++
         const isLast = activeIndex === n
         const amt = isLast ? total.sub(given) : each
@@ -1067,7 +1121,9 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
         percentage: null,
         isExcluded: Boolean(s.isExcluded),
       }))
-      const sum = splitRows.filter((s) => !s.isExcluded).reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
+      const sum = splitRows
+        .filter((s) => !s.isExcluded)
+        .reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
       if (sum.sub(total).abs().gt(new Prisma.Decimal(0.01))) {
         return c.json({ error: 'Tổng phần chia phải bằng số tiền' }, 400)
       }
@@ -1078,7 +1134,9 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
         percentage: new Prisma.Decimal(s.percentage ?? 0),
         isExcluded: Boolean(s.isExcluded),
       }))
-      const sum = splitRows.filter((s) => !s.isExcluded).reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
+      const sum = splitRows
+        .filter((s) => !s.isExcluded)
+        .reduce((a, s) => a.add(s.amount), new Prisma.Decimal(0))
       if (sum.sub(total).abs().gt(new Prisma.Decimal(0.01))) {
         return c.json({ error: 'Tổng phần trăm phải đạt 100%' }, 400)
       }
@@ -1106,8 +1164,7 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
     return c.json({ error: 'Người trả tiền phải là thành viên đang hoạt động trong nhóm' }, 400)
   }
 
-  const paidByWillChange =
-    d.paidByUserId !== undefined && d.paidByUserId !== existing.paidByUserId
+  const paidByWillChange = d.paidByUserId !== undefined && d.paidByUserId !== existing.paidByUserId
   if (paidByWillChange && existing.isStandalone && existing.standalonePayment) {
     const blockedPaidBy = existing.standalonePayment.paymentRecords.some(
       (r) => r.status === 'CONFIRMED' || r.status === 'ACCEPTED',
@@ -1115,8 +1172,7 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
     if (blockedPaidBy) {
       return c.json(
         {
-          error:
-            'Không đổi người trả tiền khi chi riêng đã có chứng từ hoặc thanh toán được duyệt',
+          error: 'Không đổi người trả tiền khi chi riêng đã có chứng từ hoặc thanh toán được duyệt',
         },
         400,
       )
@@ -1157,9 +1213,7 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
         await tx.standalonePayment.create({
           data: {
             expenseId,
-            ...(records.length
-              ? { paymentRecords: { create: records } }
-              : {}),
+            ...(records.length ? { paymentRecords: { create: records } } : {}),
           },
         })
       }
@@ -1227,7 +1281,39 @@ groupExpenseRoutes.patch('/:expenseId', async (c) => {
     return updatedExpense
   })
   await prisma.auditLog.create({
-    data: { userId, groupId, expenseId, action: 'EXPENSE_UPDATED' },
+    data: {
+      userId,
+      groupId,
+      expenseId,
+      action: 'EXPENSE_UPDATED',
+      before: {
+        title: existing.title,
+        description: existing.description,
+        amount: String(existing.amount),
+        splitType: existing.splitType,
+        categoryId: existing.categoryId,
+        paidByUserId: existing.paidByUserId,
+        expenseDate: existing.expenseDate.toISOString(),
+        tags: existing.tags,
+        imageUrls: existing.imageUrls,
+        isStandalone: existing.isStandalone,
+        status: existing.status,
+      },
+      after: {
+        title: updated.title,
+        description: updated.description,
+        amount: String(updated.amount),
+        splitType: updated.splitType,
+        categoryId: updated.categoryId,
+        paidByUserId: updated.paidByUserId,
+        expenseDate: updated.expenseDate.toISOString(),
+        tags: updated.tags,
+        imageUrls: updated.imageUrls,
+        isStandalone: updated.isStandalone,
+        status: updated.status,
+      },
+      ipAddress: clientIp(c) || null,
+    },
   })
   const actU = await actorSnapshot(prisma, userId)
   await writeGroupActivityLog(prisma, {
@@ -1255,7 +1341,7 @@ groupExpenseRoutes.delete('/:expenseId', async (c) => {
   const m = c.get('groupMember')
   if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const existing = await prisma.expense.findFirst({ where: { id: expenseId, groupId } })
+  const existing = await prisma.expense.findFirst({ where: { id: expenseId, groupId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Không tìm thấy' }, 404)
   if (existing.status === 'SETTLED') return c.json({ error: 'Không xoá được chi đã tổng kết' }, 400)
   if (existing.status === 'STANDALONE_DONE') {
@@ -1267,6 +1353,22 @@ groupExpenseRoutes.delete('/:expenseId', async (c) => {
       where: { id: userId },
       select: { name: true, email: true },
     })
+
+    const [leaders, splitUsers] = await Promise.all([
+      tx.groupMember.findMany({
+        where: { groupId, role: 'LEADER', isActive: true, leftAt: null },
+        select: { userId: true },
+      }),
+      tx.expenseSplit.findMany({ where: { expenseId }, select: { userId: true } }),
+    ])
+    const targetSet = new Set<string>([
+      existing.paidByUserId,
+      ...splitUsers.map((s) => s.userId),
+      ...leaders.map((l) => l.userId),
+    ])
+    targetSet.delete(userId)
+    const targets = [...targetSet]
+
     await writeGroupActivityLog(tx, {
       groupId,
       actorUserId: userId,
@@ -1282,7 +1384,139 @@ groupExpenseRoutes.delete('/:expenseId', async (c) => {
         isStandalone: existing.isStandalone,
       },
     })
-    await tx.expense.delete({ where: { id: expenseId } })
+
+    if (targets.length) {
+      const title = 'Chi tiêu đã bị xoá'
+      const body = `${actD?.name ?? 'Một thành viên'} đã xoá chi «${existing.title}» (${formatVndForSummary(existing.amount)}). Có thể khôi phục trong 7 ngày.`
+      await tx.notification.createMany({
+        data: targets.map((uid) => ({
+          userId: uid,
+          type: 'EXPENSE_DELETED',
+          title,
+          body,
+          data: { groupId, expenseId, kind: 'expense_deleted' },
+        })),
+      })
+    }
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        groupId,
+        expenseId,
+        action: 'EXPENSE_SOFT_DELETED',
+        before: {
+          title: existing.title,
+          amount: String(existing.amount),
+          status: existing.status,
+          isStandalone: existing.isStandalone,
+        },
+        after: { deletedAt: new Date().toISOString() },
+        ipAddress: clientIp(c) || null,
+      },
+    })
+    await tx.expense.update({
+      where: { id: expenseId },
+      data: {
+        deletedAt: new Date(),
+        deletedByUserId: userId,
+      },
+    })
   })
+  return c.json({ data: { ok: true } })
+})
+
+groupExpenseRoutes.post('/:expenseId/restore', async (c) => {
+  const userId = c.get('userId')
+  const groupId = c.get('groupId')
+  const expenseId = c.req.param('expenseId')
+  const m = c.get('groupMember')
+  const adminBrowse = c.get('adminGroupBrowse')
+  if (!m && !adminBrowse) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+
+  const existing = await prisma.expense.findFirst({ where: { id: expenseId, groupId } })
+  if (!existing) return c.json({ error: 'Không tìm thấy' }, 404)
+  if (!existing.deletedAt) return c.json({ error: 'Chi tiêu chưa bị xoá' }, 400)
+  const restoreDeadline = new Date()
+  restoreDeadline.setDate(restoreDeadline.getDate() - 7)
+  if (existing.deletedAt < restoreDeadline) {
+    return c.json({ error: 'Đã quá hạn khôi phục (7 ngày)' }, 400)
+  }
+  if (existing.status === 'SETTLED') return c.json({ error: 'Không khôi phục chi đã tổng kết' }, 400)
+  if (existing.status === 'STANDALONE_DONE') {
+    return c.json({ error: 'Không khôi phục chi riêng đã hoàn tất thanh toán' }, 400)
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const act = await tx.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    })
+
+    const [leaders, splitUsers] = await Promise.all([
+      tx.groupMember.findMany({
+        where: { groupId, role: 'LEADER', isActive: true, leftAt: null },
+        select: { userId: true },
+      }),
+      tx.expenseSplit.findMany({ where: { expenseId }, select: { userId: true } }),
+    ])
+    const targetSet = new Set<string>([
+      existing.paidByUserId,
+      ...splitUsers.map((s) => s.userId),
+      ...leaders.map((l) => l.userId),
+    ])
+    targetSet.delete(userId)
+    const targets = [...targetSet]
+
+    await tx.expense.update({
+      where: { id: expenseId },
+      data: { deletedAt: null, deletedByUserId: null },
+    })
+
+    if (targets.length) {
+      const title = 'Chi tiêu đã được khôi phục'
+      const body = `${act?.name ?? 'Một thành viên'} đã khôi phục chi «${existing.title}» (${formatVndForSummary(existing.amount)}).`
+      await tx.notification.createMany({
+        data: targets.map((uid) => ({
+          userId: uid,
+          type: 'EXPENSE_RESTORED',
+          title,
+          body,
+          data: { groupId, expenseId, kind: 'expense_restored' },
+        })),
+      })
+    }
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        groupId,
+        expenseId,
+        action: 'EXPENSE_RESTORED',
+        before: {
+          deletedAt: existing.deletedAt!.toISOString(),
+          deletedByUserId: existing.deletedByUserId,
+        },
+        after: { deletedAt: null, deletedByUserId: null },
+        ipAddress: clientIp(c) || null,
+      },
+    })
+    await writeGroupActivityLog(tx, {
+      groupId,
+      actorUserId: userId,
+      actorName: act?.name ?? '',
+      actorEmail: act?.email ?? '',
+      action: 'EXPENSE_RESTORED',
+      summary: `${act?.name ?? '?'} (${act?.email ?? ''}) khôi phục chi «${existing.title}» — ${formatVndForSummary(existing.amount)} (mã ${expenseId})`,
+      targetType: 'EXPENSE',
+      targetId: expenseId,
+      metadata: {
+        title: existing.title,
+        amount: String(existing.amount),
+        isStandalone: existing.isStandalone,
+      },
+    })
+  })
+
   return c.json({ data: { ok: true } })
 })

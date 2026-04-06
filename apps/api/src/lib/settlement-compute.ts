@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@expense/database'
+import { Prisma, prisma } from '@expense/database'
 import type { MemberBalance, SettlementPreviewExpenseItem, Transfer } from '@expense/types'
 
 /** Thành viên nhóm (kể cả đã rời) miễn tài khoản User còn hoạt động — dùng cho tổng kết. */

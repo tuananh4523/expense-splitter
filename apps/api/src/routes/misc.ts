@@ -8,8 +8,27 @@ export const categoryRoutes = new Hono<{
 }>()
 categoryRoutes.use('*', requireAuth)
 categoryRoutes.get('/', async (c) => {
+  const groupId = c.req.query('groupId')
+  const userId = c.get('userId')
+  
+  const where: any = { isSystem: true }
+  
+  if (groupId) {
+    const member = await prisma.groupMember.findFirst({
+      where: { groupId, userId, isActive: true, leftAt: null },
+    })
+    if (member) {
+      where.OR = [
+        { isSystem: true },
+        { groupId: groupId },
+      ]
+      delete where.isSystem
+    }
+  }
+
   const list = await prisma.category.findMany({
-    orderBy: { name: 'asc' },
+    where,
+    orderBy: [{ isSystem: 'desc' }, { name: 'asc' }],
     select: { id: true, name: true, icon: true, color: true, isSystem: true },
   })
   return c.json({ data: list })

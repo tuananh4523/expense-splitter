@@ -4,22 +4,35 @@ import { MemberProfileDrawer } from '@/components/groups/MemberProfileDrawer'
 import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import {
+  useApproveJoinRequest,
   useCancelGroupInvite,
   useGroup,
+  useGroupJoinRequests,
   useGroupMembers,
   useLeaveGroup,
+  useRejectJoinRequest,
   useRemoveMember,
   useUpdateMemberRole,
-  useGroupJoinRequests,
-  useApproveJoinRequest,
-  useRejectJoinRequest,
 } from '@/hooks/useGroup'
-import { withAuth } from '@/utils/withAuth'
 import { fmtDate } from '@/utils/date'
+import { withAuth } from '@/utils/withAuth'
 import { UserAddOutlined } from '@ant-design/icons'
+import type { GroupJoinRequestDto, MemberDto, PendingGroupInviteDto } from '@expense/types'
 import { Icon } from '@iconify/react'
-import type { MemberDto, PendingGroupInviteDto, GroupJoinRequestDto } from '@expense/types'
-import { App, Avatar, Button, Modal, Popconfirm, Select, Space, Table, Tabs, Tag, Tooltip, Typography } from 'antd'
+import {
+  App,
+  Avatar,
+  Button,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
@@ -49,7 +62,10 @@ export default function GroupMembersPage() {
   const isLeader = group?.myRole === 'LEADER'
   const canManageInvites = group?.myRole === 'LEADER' || group?.myRole === 'VICE_LEADER'
   const { data: memberList, isLoading } = useGroupMembers(groupId)
-  const { data: joinRequests = [], isLoading: isJoinRequestsLoading } = useGroupJoinRequests(groupId, canManageInvites)
+  const { data: joinRequests = [], isLoading: isJoinRequestsLoading } = useGroupJoinRequests(
+    groupId,
+    canManageInvites,
+  )
   const members = memberList?.members ?? []
   const pendingInvites = memberList?.pendingInvites ?? []
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -72,13 +88,21 @@ export default function GroupMembersPage() {
     const pendingRows: Row[] = isLeader
       ? pendingInvites.map((inv) => ({ key: `p-${inv.id}`, kind: 'pending' as const, invite: inv }))
       : []
-    const mRows: Row[] = members.map((m) => ({ key: `m-${m.id}`, kind: 'member' as const, member: m }))
+    const mRows: Row[] = members.map((m) => ({
+      key: `m-${m.id}`,
+      kind: 'member' as const,
+      member: m,
+    }))
     return [...pendingRows, ...mRows]
   }, [isLeader, pendingInvites, members])
 
   const requestRows: Row[] = useMemo(() => {
     return canManageInvites
-      ? joinRequests.map((req) => ({ key: `r-${req.id}`, kind: 'join-request' as const, request: req }))
+      ? joinRequests.map((req) => ({
+          key: `r-${req.id}`,
+          kind: 'join-request' as const,
+          request: req,
+        }))
       : []
   }, [canManageInvites, joinRequests])
 
@@ -98,7 +122,9 @@ export default function GroupMembersPage() {
               {row.request.user.name[0]?.toUpperCase()}
             </Avatar>
             <div className="min-w-0">
-              <div className="font-medium text-stone-900 leading-tight">{row.request.user.name}</div>
+              <div className="font-medium text-stone-900 leading-tight">
+                {row.request.user.name}
+              </div>
               <div className="text-xs text-stone-400">{row.request.user.email}</div>
             </div>
           </div>
@@ -126,7 +152,9 @@ export default function GroupMembersPage() {
               {row.invite.invitee.name[0]?.toUpperCase()}
             </Avatar>
             <div className="min-w-0">
-              <div className="font-medium text-stone-900 leading-tight">{row.invite.invitee.name}</div>
+              <div className="font-medium text-stone-900 leading-tight">
+                {row.invite.invitee.name}
+              </div>
               <div className="text-xs text-stone-400">{row.invite.invitee.email}</div>
             </div>
           </div>
@@ -177,7 +205,9 @@ export default function GroupMembersPage() {
     {
       title: (
         <Tooltip title="Tổng tiền các khoản chung do bạn trả (người trả bill).">
-          <span className="cursor-help border-b border-dotted border-stone-300">Tổng trả hộ (chung)</span>
+          <span className="cursor-help border-b border-dotted border-stone-300">
+            Tổng trả hộ (chung)
+          </span>
         </Tooltip>
       ),
       key: 'sharedPaid',
@@ -195,7 +225,9 @@ export default function GroupMembersPage() {
     {
       title: (
         <Tooltip title="Đã nộp quỹ (đã duyệt) − đã trừ quỹ (theo người).">
-          <span className="cursor-help border-b border-dotted border-stone-300">Phần quỹ (duyệt)</span>
+          <span className="cursor-help border-b border-dotted border-stone-300">
+            Phần quỹ (duyệt)
+          </span>
         </Tooltip>
       ),
       key: 'fundMember',
@@ -213,7 +245,9 @@ export default function GroupMembersPage() {
     {
       title: (
         <Tooltip title="Phần tiền gán cho bạn trên khoản chung (phần chia).">
-          <span className="cursor-help border-b border-dotted border-stone-300">Phần chia (bill)</span>
+          <span className="cursor-help border-b border-dotted border-stone-300">
+            Phần chia (bill)
+          </span>
         </Tooltip>
       ),
       key: 'sharedOwed',
@@ -231,7 +265,9 @@ export default function GroupMembersPage() {
     {
       title: (
         <Tooltip title="Đã trả + quỹ − phần chia. Dương: được nợ; âm: còn nợ.">
-          <span className="cursor-help border-b border-dotted border-stone-300">Chênh (ước tính)</span>
+          <span className="cursor-help border-b border-dotted border-stone-300">
+            Chênh (ước tính)
+          </span>
         </Tooltip>
       ),
       key: 'balance',
@@ -262,31 +298,33 @@ export default function GroupMembersPage() {
           {row.kind === 'join-request' && canManageInvites ? (
             <>
               <Tooltip title="Chấp thuận">
-                <Button 
-                  type="text" 
-                  size="small" 
-                  className="text-green-600 hover:text-green-700" 
-                  icon={<Icon icon="mdi:check-circle-outline" width={18} />} 
+                <Button
+                  type="text"
+                  size="small"
+                  className="text-green-600 hover:text-green-700"
+                  icon={<Icon icon="mdi:check-circle-outline" width={18} />}
                   onClick={(e) => {
                     e.stopPropagation()
-                    void approveReq.mutateAsync(row.request.id)
+                    void approveReq
+                      .mutateAsync(row.request.id)
                       .then(() => message.success('Đã chấp thuận'))
-                      .catch(err => message.error(err instanceof Error ? err.message : 'Lỗi'))
+                      .catch((err) => message.error(err instanceof Error ? err.message : 'Lỗi'))
                   }}
                   aria-label="Chấp thuận"
                 />
               </Tooltip>
               <Tooltip title="Từ chối">
-                <Button 
-                  type="text" 
-                  size="small" 
+                <Button
+                  type="text"
+                  size="small"
                   danger
-                  icon={<Icon icon="mdi:close-circle-outline" width={18} />} 
+                  icon={<Icon icon="mdi:close-circle-outline" width={18} />}
                   onClick={(e) => {
                     e.stopPropagation()
-                    void rejectReq.mutateAsync(row.request.id)
+                    void rejectReq
+                      .mutateAsync(row.request.id)
                       .then(() => message.success('Đã từ chối'))
-                      .catch(err => message.error(err instanceof Error ? err.message : 'Lỗi'))
+                      .catch((err) => message.error(err instanceof Error ? err.message : 'Lỗi'))
                   }}
                   aria-label="Từ chối"
                 />
@@ -332,7 +370,12 @@ export default function GroupMembersPage() {
                 }
               >
                 <Tooltip title="Xoá khỏi nhóm">
-                  <Button type="text" size="small" danger icon={<Icon icon="mdi:account-remove-outline" width={16} />} />
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<Icon icon="mdi:account-remove-outline" width={16} />}
+                  />
                 </Tooltip>
               </Popconfirm>
             </>
@@ -348,7 +391,12 @@ export default function GroupMembersPage() {
               }
             >
               <Tooltip title="Huỷ lời mời">
-                <Button type="text" size="small" danger icon={<Icon icon="mdi:email-remove-outline" width={16} />} />
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  icon={<Icon icon="mdi:email-remove-outline" width={16} />}
+                />
               </Tooltip>
             </Popconfirm>
           ) : null}
@@ -410,21 +458,23 @@ export default function GroupMembersPage() {
               />
             ),
           },
-          ...(canManageInvites ? [
-            {
-              key: 'requests',
-              label: `Yêu cầu xin vào ${joinRequests.length > 0 ? `(${joinRequests.length})` : ''}`,
-              children: (
-                <Table<Row>
-                  rowKey="key"
-                  loading={isJoinRequestsLoading}
-                  columns={columns}
-                  dataSource={requestRows}
-                  scroll={{ x: true }}
-                />
-              ),
-            },
-          ] : []),
+          ...(canManageInvites
+            ? [
+                {
+                  key: 'requests',
+                  label: `Yêu cầu xin vào ${joinRequests.length > 0 ? `(${joinRequests.length})` : ''}`,
+                  children: (
+                    <Table<Row>
+                      rowKey="key"
+                      loading={isJoinRequestsLoading}
+                      columns={columns}
+                      dataSource={requestRows}
+                      scroll={{ x: true }}
+                    />
+                  ),
+                },
+              ]
+            : []),
         ]}
       />
 
@@ -435,11 +485,7 @@ export default function GroupMembersPage() {
       <MemberProfileDrawer member={profileMember} onClose={() => setProfileMember(null)} />
 
       <Modal
-        title={
-          roleModalMember
-            ? `Đổi vai trò — ${roleModalMember.user.name}`
-            : 'Đổi vai trò'
-        }
+        title={roleModalMember ? `Đổi vai trò — ${roleModalMember.user.name}` : 'Đổi vai trò'}
         open={roleModalMember != null}
         onCancel={() => setRoleModalMember(null)}
         okText="Lưu"

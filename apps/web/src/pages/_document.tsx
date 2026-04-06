@@ -1,17 +1,11 @@
 import { APP_NAME } from '@/config/app'
-import { getPublicSiteUrl, SITE_DESCRIPTION } from '@/config/site'
+import { SITE_DESCRIPTION, getPublicSiteUrl } from '@/config/site'
 import { beVietnamPro } from '@/lib/font'
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from '@/lib/sidebar-pref'
 import { UI_THEME_STORAGE_KEY } from '@/lib/uiThemeStorage'
+import { StyleProvider, createCache, extractStyle } from '@ant-design/cssinjs'
 import { UI_THEME_IDS } from '@expense/types'
-import { createCache, extractStyle, StyleProvider } from '@ant-design/cssinjs'
-import Document, {
-  Head,
-  Html,
-  Main,
-  NextScript,
-  type DocumentContext,
-} from 'next/document'
+import Document, { Head, Html, Main, NextScript, type DocumentContext } from 'next/document'
 import { ServerStyleSheet } from 'styled-components'
 
 /** Chạy trước paint đầu — class khớp localStorage sidebar (SSR không biết được). */
@@ -58,10 +52,7 @@ export default class MyDocument extends Document {
         <Head>
           <script dangerouslySetInnerHTML={{ __html: uiThemeBootstrapScript }} />
           <script dangerouslySetInnerHTML={{ __html: sidebarPrefBootstrapScript }} />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, viewport-fit=cover"
-          />
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
           <meta name="description" content={SITE_DESCRIPTION} />
           <link rel="canonical" href={siteUrl} />
           <link rel="icon" href="/favicon.ico" sizes="32x32" />

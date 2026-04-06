@@ -121,7 +121,9 @@ export function usePatchBank() {
         qrImageUrl: string | null
       }>
     }) =>
-      api.patch<{ data: BankAccountRow }>(`/users/me/banks/${p.bankId}`, p.body).then((r) => r.data.data),
+      api
+        .patch<{ data: BankAccountRow }>(`/users/me/banks/${p.bankId}`, p.body)
+        .then((r) => r.data.data),
     onSuccess: () => void qc.invalidateQueries({ queryKey: profileKeys.me }),
   })
 }

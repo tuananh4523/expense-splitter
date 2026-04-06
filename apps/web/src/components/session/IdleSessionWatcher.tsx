@@ -26,7 +26,15 @@ export function IdleSessionWatcher() {
       lastActivity = t
     }
 
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click', 'mousemove', 'wheel'] as const
+    const events = [
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'click',
+      'mousemove',
+      'wheel',
+    ] as const
     for (const e of events) {
       window.addEventListener(e, onActivity, { passive: true })
     }

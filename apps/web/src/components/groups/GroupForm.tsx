@@ -1,11 +1,11 @@
 import { IconPicker, type IconPickerValue } from '@/components/shared/IconPicker'
 import { useCreateGroup } from '@/hooks/useGroup'
-import type { CreateGroupInput } from '@expense/types'
 import { createGroupSchema } from '@expense/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { App, Button, Input, Typography } from 'antd'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 export function GroupForm() {
   const { message } = App.useApp()
@@ -14,15 +14,17 @@ export function GroupForm() {
     icon: 'mdi:account-group-outline',
     color: '#0073AA',
   })
-  const { control, handleSubmit, formState } = useForm<CreateGroupInput>({
+  type GroupFormValues = z.input<typeof createGroupSchema>
+  const { control, handleSubmit, formState } = useForm<GroupFormValues>({
     resolver: zodResolver(createGroupSchema),
-    defaultValues: { name: '', description: '' },
+    defaultValues: { name: '', description: '', requireApproval: false },
   })
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      const parsed = createGroupSchema.parse(data)
       await create.mutateAsync({
-        ...data,
+        ...parsed,
         icon: iconData.icon,
         color: iconData.color,
       })
@@ -40,7 +42,9 @@ export function GroupForm() {
   return (
     <form className="max-w-lg flex flex-col gap-5" onSubmit={onSubmit}>
       <div>
-        <Typography.Text className="mb-2 block font-medium text-stone-700">Icon nhóm</Typography.Text>
+        <Typography.Text className="mb-2 block font-medium text-stone-700">
+          Icon nhóm
+        </Typography.Text>
         <div className="flex items-center gap-3">
           <IconPicker value={iconData} onChange={setIconData} size={56} />
           <Typography.Text type="secondary" className="text-sm">
@@ -49,7 +53,9 @@ export function GroupForm() {
         </div>
       </div>
       <div>
-        <Typography.Text className="mb-2 block font-medium text-stone-700">Tên nhóm</Typography.Text>
+        <Typography.Text className="mb-2 block font-medium text-stone-700">
+          Tên nhóm
+        </Typography.Text>
         <Controller
           name="name"
           control={control}
@@ -68,7 +74,9 @@ export function GroupForm() {
         ) : null}
       </div>
       <div>
-        <Typography.Text className="mb-2 block font-medium text-stone-700">Mô tả (tuỳ chọn)</Typography.Text>
+        <Typography.Text className="mb-2 block font-medium text-stone-700">
+          Mô tả (tuỳ chọn)
+        </Typography.Text>
         <Controller
           name="description"
           control={control}

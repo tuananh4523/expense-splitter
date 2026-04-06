@@ -1,9 +1,9 @@
 import { useMarkRead, useNotifications } from '@/hooks/useNotifications'
-import { getNotificationTargetPath } from '@/utils/notificationPath'
 import { timeAgo } from '@/utils/date'
-import { Icon } from '@iconify/react'
-import type { NotificationDto } from '@expense/types'
+import { getNotificationTargetPath } from '@/utils/notificationPath'
 import { BellOutlined } from '@ant-design/icons'
+import type { NotificationDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 import { Badge, Dropdown, Spin, Typography } from 'antd'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
@@ -39,7 +39,12 @@ export function NotificationBellDropdown({
   }
 
   const defaultTrigger = (
-    <button type="button" className="app-header-bell-btn" aria-label="Thông báo" aria-haspopup="menu">
+    <button
+      type="button"
+      className="app-header-bell-btn"
+      aria-label="Thông báo"
+      aria-haspopup="menu"
+    >
       <Icon icon="mdi:bell-outline" width={20} />
     </button>
   )
@@ -96,7 +101,10 @@ export function NotificationBellDropdown({
                         {item.title}
                       </Typography.Text>
                       {item.body ? (
-                        <Typography.Text type="secondary" className="mt-0.5 line-clamp-2 block text-[13px]">
+                        <Typography.Text
+                          type="secondary"
+                          className="mt-0.5 line-clamp-2 block text-[13px]"
+                        >
                           {item.body}
                         </Typography.Text>
                       ) : null}

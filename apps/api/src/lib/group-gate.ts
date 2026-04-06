@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@expense/database'
+import { type Prisma, prisma } from '@expense/database'
 import type { GroupMember } from '@expense/database'
 import type { Context } from 'hono'
 
@@ -42,7 +42,10 @@ function formerGroupLeaderProofMutateAllowed(c: Context): boolean {
 }
 
 /** Cho router con /:groupId/expenses, /:groupId/settlements — gắn groupMember + adminGroupBrowse. */
-export async function runGroupSubresourceGate(c: Context, groupId: string): Promise<Response | null> {
+export async function runGroupSubresourceGate(
+  c: Context,
+  groupId: string,
+): Promise<Response | null> {
   const userId = c.get('userId') as string
   const userRole = c.get('userRole') as string
   const method = c.req.method

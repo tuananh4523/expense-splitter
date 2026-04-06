@@ -1,15 +1,21 @@
+import { randomUUID } from 'node:crypto'
 import { prisma } from '@expense/database'
 import { loginSchema, registerSchema } from '@expense/types'
 import bcrypt from 'bcryptjs'
-import { randomUUID } from 'node:crypto'
 import { Hono } from 'hono'
 import { formatJwtSignError, signAccessToken } from '../lib/jwt.js'
 import { signedStorageUrlForUser } from '../lib/minio.js'
-import { createUserSession, formatUserSessionCreateError } from '../lib/userSession.js'
+import { createUserSession } from '../lib/userSession.js'
 
 const auth = new Hono()
 
-async function userDto(u: { id: string; email: string; name: string; avatarUrl: string | null; role: string }) {
+async function userDto(u: {
+  id: string
+  email: string
+  name: string
+  avatarUrl: string | null
+  role: string
+}) {
   return {
     id: u.id,
     email: u.email,
@@ -29,7 +35,10 @@ auth.post('/login', async (c) => {
 
   const parsed = loginSchema.safeParse(body)
   if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten().fieldErrors.email?.[0] ?? 'Dữ liệu không hợp lệ' }, 400)
+    return c.json(
+      { error: parsed.error.flatten().fieldErrors.email?.[0] ?? 'Dữ liệu không hợp lệ' },
+      400,
+    )
   }
 
   const { email, password } = parsed.data

@@ -2,7 +2,7 @@
  * Bảng màu bổ sung (WordPress admin schemes).
  * Mặc định `fresh` = :root trong tokens.css — không đặt data-theme.
  */
-[data-theme='light'] {
+[data-theme="light"] {
   --wp-blue: #d54e21;
   --wp-blue-dark: #c0461a;
   --color-brand: var(--wp-blue);
@@ -26,7 +26,7 @@
   --drawer-body-bg: #e5e5e5;
 }
 
-[data-theme='80s-kid'] {
+[data-theme="80s-kid"] {
   --wp-blue: #cb2b8e;
   --wp-blue-dark: #b52680;
   --color-brand: var(--wp-blue);
@@ -50,7 +50,7 @@
   --drawer-body-bg: #1c2260;
 }
 
-[data-theme='aubergine'] {
+[data-theme="aubergine"] {
   --wp-blue: #a3b745;
   --wp-blue-dark: #8fa03b;
   --color-brand: var(--wp-blue);
@@ -74,7 +74,7 @@
   --drawer-body-bg: #4a1a2c;
 }
 
-[data-theme='blue'] {
+[data-theme="blue"] {
   --wp-blue: #e1a948;
   --wp-blue-dark: #c9943d;
   --color-brand: var(--wp-blue);
@@ -98,7 +98,7 @@
   --drawer-body-bg: #096484;
 }
 
-[data-theme='coffee'] {
+[data-theme="coffee"] {
   --wp-blue: #c7a589;
   --wp-blue-dark: #b39070;
   --color-brand: var(--wp-blue);
@@ -122,7 +122,7 @@
   --drawer-body-bg: #46403c;
 }
 
-[data-theme='cruise'] {
+[data-theme="cruise"] {
   --wp-blue: #d9ab59;
   --wp-blue-dark: #c49a46;
   --color-brand: var(--wp-blue);
@@ -146,7 +146,7 @@
   --drawer-body-bg: #263238;
 }
 
-[data-theme='ectoplasm'] {
+[data-theme="ectoplasm"] {
   --wp-blue: #a7b656;
   --wp-blue-dark: #919e43;
   --color-brand: var(--wp-blue);
@@ -170,7 +170,7 @@
   --drawer-body-bg: #413256;
 }
 
-[data-theme='flat'] {
+[data-theme="flat"] {
   --wp-blue: #f18500;
   --wp-blue-dark: #d97700;
   --color-brand: var(--wp-blue);
@@ -194,7 +194,7 @@
   --drawer-body-bg: #1e2327;
 }
 
-[data-theme='lawn'] {
+[data-theme="lawn"] {
   --wp-blue: #b4b848;
   --wp-blue-dark: #a0a43a;
   --color-brand: var(--wp-blue);
@@ -218,7 +218,7 @@
   --drawer-body-bg: #1b3218;
 }
 
-[data-theme='midnight'] {
+[data-theme="midnight"] {
   --wp-blue: #e14d43;
   --wp-blue-dark: #cc4039;
   --color-brand: var(--wp-blue);
@@ -242,7 +242,7 @@
   --drawer-body-bg: #25282b;
 }
 
-[data-theme='ocean'] {
+[data-theme="ocean"] {
   --wp-blue: #9ebaa0;
   --wp-blue-dark: #88a48a;
   --color-brand: var(--wp-blue);
@@ -266,7 +266,7 @@
   --drawer-body-bg: #627c83;
 }
 
-[data-theme='primary'] {
+[data-theme="primary"] {
   --wp-blue: #b81c2e;
   --wp-blue-dark: #a21828;
   --color-brand: var(--wp-blue);
@@ -290,7 +290,7 @@
   --drawer-body-bg: #191e23;
 }
 
-[data-theme='seashore'] {
+[data-theme="seashore"] {
   --wp-blue: #a09060;
   --wp-blue-dark: #8c7d50;
   --color-brand: var(--wp-blue);
@@ -314,7 +314,7 @@
   --drawer-body-bg: #ede8d6;
 }
 
-[data-theme='sunrise'] {
+[data-theme="sunrise"] {
   --wp-blue: #dd823b;
   --wp-blue-dark: #c97030;
   --color-brand: var(--wp-blue);
@@ -338,7 +338,7 @@
   --drawer-body-bg: #6e3d3d;
 }
 
-[data-theme='vineyard'] {
+[data-theme="vineyard"] {
   --wp-blue: #c09050;
   --wp-blue-dark: #a87c40;
   --color-brand: var(--wp-blue);

@@ -1,4 +1,5 @@
-import { prisma, Prisma } from '@expense/database'
+import { randomUUID } from 'node:crypto'
+import { Prisma, prisma } from '@expense/database'
 import type { AdminBroadcastHistoryItemDto, AdminBroadcastRecipientDto } from '@expense/types'
 import {
   adminBroadcastSchema,
@@ -8,10 +9,8 @@ import {
   patchSystemSettingsSchema,
 } from '@expense/types'
 import bcrypt from 'bcryptjs'
-import { randomUUID } from 'node:crypto'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { emitSystemBroadcastToUsers, getOnlineUserIds } from '../realtime/socket.js'
 import { deleteUserAndRelatedData } from '../lib/delete-user.js'
 import { cleanupGroupOperationalData } from '../lib/group-data-cleanup.js'
 import { signedStorageUrlForUser } from '../lib/minio.js'
@@ -19,6 +18,7 @@ import { deleteOrphanStorageObjects } from '../lib/storage-cleanup.js'
 import { getOrCreateSystemConfig } from '../lib/systemConfig.js'
 import { requireAuth } from '../middleware/auth.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
+import { emitSystemBroadcastToUsers, getOnlineUserIds } from '../realtime/socket.js'
 
 const listUsersQuery = z.object({
   page: z.coerce.number().default(1),
@@ -289,7 +289,10 @@ adminRoutes.delete('/users/:userId', async (c) => {
   if (userId === c.get('userId')) {
     return c.json({ error: 'Không thể xóa tài khoản của chính mình' }, 400)
   }
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } })
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true },
+  })
   if (!target) {
     return c.json({ error: 'Không tìm thấy người dùng' }, 404)
   }

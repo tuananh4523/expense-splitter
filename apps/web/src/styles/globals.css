@@ -3,8 +3,8 @@
  * CSS nền + FOUC sidebar nằm trong shell.css (import trước file này trong _app).
  */
 @import "tailwindcss";
-@import './tokens.css';
-@import './themes.css';
+@import "./tokens.css";
+@import "./themes.css";
 @config "../../tailwind.config.ts";
 @source "../**/*.{ts,tsx}";
 
@@ -190,10 +190,7 @@
   line-height: 1;
   flex-shrink: 0;
   user-select: none;
-  transition:
-    color 0.15s,
-    background 0.15s,
-    border-color 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .app-header-version--beta {
@@ -442,7 +439,9 @@
   --sidebar-collapsed-hit: 44px;
 }
 
-.app-sider .sidebar-menu.ant-menu-inline-collapsed li.ant-menu-item-disabled:has(.sidebar-section-label) {
+.app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  li.ant-menu-item-disabled:has(.sidebar-section-label) {
   display: none !important;
 }
 
@@ -517,8 +516,16 @@
   overflow: hidden !important;
 }
 
-.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-item-icon,
-.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .sidebar-group-icon {
+.app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-item-icon,
+.app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title
+  .sidebar-group-icon {
   margin: 0 !important;
   line-height: 0 !important;
   display: inline-flex !important;
@@ -526,7 +533,11 @@
   justify-content: center !important;
 }
 
-.app-sider .sidebar-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .sidebar-group-icon {
+.app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title
+  .sidebar-group-icon {
   min-width: 0 !important;
   min-height: 0 !important;
 }
@@ -1231,4 +1242,3 @@ span.ant-upload-wrapper.ant-upload-picture-card-wrapper > .ant-upload.ant-upload
   word-break: break-word;
   white-space: pre-wrap;
 }
-

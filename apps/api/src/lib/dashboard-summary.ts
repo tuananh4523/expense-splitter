@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@expense/database'
+import { Prisma, prisma } from '@expense/database'
 
 const activeMemberWhere = { isActive: true, leftAt: null } as const
 const EPS = new Prisma.Decimal('0.005')
@@ -153,10 +153,7 @@ export async function memberUnsettledFinancials(
   for (const uid of userIds) {
     const fundNet = fromFund.get(uid)!
     fundContributedByUser.set(uid, fundNet)
-    netIouByUser.set(
-      uid,
-      paidSharedByUser.get(uid)!.add(fundNet).sub(owedSharedByUser.get(uid)!),
-    )
+    netIouByUser.set(uid, paidSharedByUser.get(uid)!.add(fundNet).sub(owedSharedByUser.get(uid)!))
   }
   return { fundContributedByUser, paidSharedByUser, owedSharedByUser, netIouByUser }
 }

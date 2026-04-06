@@ -1,8 +1,5 @@
-import { clearGroupFundLedger } from '../lib/clear-group-fund.js'
-import { computeGroupSettlementPreview } from '../lib/settlement-compute.js'
-import { formatVndForSummary } from '../lib/format-vnd.js'
-import { actorSnapshot, writeGroupActivityLog } from '../lib/group-activity-log.js'
-import { prisma, Prisma } from '@expense/database'
+import { Prisma, prisma } from '@expense/database'
+import type { GroupMember } from '@expense/database'
 import {
   acceptPaymentSchema,
   confirmPaymentSchema,
@@ -18,10 +15,13 @@ import type {
   SettlementSummary,
 } from '@expense/types'
 import { Hono } from 'hono'
+import { clearGroupFundLedger } from '../lib/clear-group-fund.js'
+import { formatVndForSummary } from '../lib/format-vnd.js'
+import { actorSnapshot, writeGroupActivityLog } from '../lib/group-activity-log.js'
 import { findGroupLeaderIncludingFormer, runGroupSubresourceGate } from '../lib/group-gate.js'
 import { signedStorageUrlForUser } from '../lib/minio.js'
+import { computeGroupSettlementPreview } from '../lib/settlement-compute.js'
 import { requireAuth } from '../middleware/auth.js'
-import type { GroupMember } from '@expense/database'
 
 const activeMemberWhere = { isActive: true, leftAt: null } as const
 
@@ -446,8 +446,7 @@ groupSettlementRoutes.post('/', async (c) => {
       if (e.message === '__SETTLEMENT_EXPENSE_CONFLICT__') {
         return c.json(
           {
-            error:
-              'Một số chi tiêu vừa được gán đợt tổng kết khác. Làm mới xem trước rồi thử lại.',
+            error: 'Một số chi tiêu vừa được gán đợt tổng kết khác. Làm mới xem trước rồi thử lại.',
           },
           409,
         )
@@ -491,9 +490,12 @@ groupSettlementRoutes.post('/:settlementId/notify-pending-payers', async (c) => 
   const activePayers = await activeUserIdSet([...targetPayerIds])
   const notifyIds = [...targetPayerIds].filter((id) => activePayers.has(id))
   if (notifyIds.length === 0) {
-    return c.json({
-      error: 'Không gửi được nhắc — các tài khoản người trả đã bị vô hiệu hoá.',
-    }, 400)
+    return c.json(
+      {
+        error: 'Không gửi được nhắc — các tài khoản người trả đã bị vô hiệu hoá.',
+      },
+      400,
+    )
   }
 
   const stTitle = settlement.title
@@ -580,68 +582,71 @@ groupSettlementRoutes.post('/:settlementId/payments/:paymentRecordId/confirm', a
   return c.json({ data: { ok: true } })
 })
 
-groupSettlementRoutes.post('/:settlementId/payments/:paymentRecordId/reopen-after-reject', async (c) => {
-  const userId = c.get('userId')
-  const groupId = c.get('groupId')
-  const settlementId = c.req.param('settlementId')
-  const paymentRecordId = c.req.param('paymentRecordId')
-  const m = c.get('groupMember')
-  if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+groupSettlementRoutes.post(
+  '/:settlementId/payments/:paymentRecordId/reopen-after-reject',
+  async (c) => {
+    const userId = c.get('userId')
+    const groupId = c.get('groupId')
+    const settlementId = c.req.param('settlementId')
+    const paymentRecordId = c.req.param('paymentRecordId')
+    const m = c.get('groupMember')
+    if (!m) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
 
-  const rec = await prisma.paymentRecord.findFirst({
-    where: { id: paymentRecordId, settlementId },
-    include: {
-      settlement: { select: { title: true } },
-      payer: { select: { name: true } },
-    },
-  })
-  if (!rec) return c.json({ error: 'Không tìm thấy' }, 404)
-  if (rec.status !== 'REJECTED') {
-    return c.json({ error: 'Chỉ mở lại khi thanh toán đã bị từ chối' }, 400)
-  }
-
-  const leader = await findGroupLeaderIncludingFormer(groupId, userId)
-  const isPayer = rec.payerUserId === userId
-  if (!leader && !isPayer) return c.json({ error: 'Không có quyền' }, 403)
-
-  await prisma.paymentRecord.update({
-    where: { id: rec.id },
-    data: {
-      status: 'PENDING',
-      proofImageUrls: [],
-      payerComment: null,
-      confirmedAt: null,
-      acceptedAt: null,
-      rejectedAt: null,
-    },
-  })
-
-  if (leader && !isPayer) {
-    const payerOk = await prisma.user.findFirst({
-      where: { id: rec.payerUserId, isActive: true },
-      select: { id: true },
+    const rec = await prisma.paymentRecord.findFirst({
+      where: { id: paymentRecordId, settlementId },
+      include: {
+        settlement: { select: { title: true } },
+        payer: { select: { name: true } },
+      },
     })
-    if (payerOk) {
-      await prisma.notification.create({
-        data: {
-          userId: rec.payerUserId,
-          type: 'PAYMENT_REQUEST',
-          title: 'Yêu cầu thanh toán lại (tổng kết)',
-          body: `Trưởng nhóm yêu cầu bạn nộp lại chứng từ cho khoản trong «${rec.settlement?.title ?? 'tổng kết'}».`,
-          settlementId,
-          data: {
-            groupId,
-            settlementId,
-            paymentRecordId: rec.id,
-            kind: 'settlement_reopen',
-          },
-        },
-      })
+    if (!rec) return c.json({ error: 'Không tìm thấy' }, 404)
+    if (rec.status !== 'REJECTED') {
+      return c.json({ error: 'Chỉ mở lại khi thanh toán đã bị từ chối' }, 400)
     }
-  }
 
-  return c.json({ data: { ok: true } })
-})
+    const leader = await findGroupLeaderIncludingFormer(groupId, userId)
+    const isPayer = rec.payerUserId === userId
+    if (!leader && !isPayer) return c.json({ error: 'Không có quyền' }, 403)
+
+    await prisma.paymentRecord.update({
+      where: { id: rec.id },
+      data: {
+        status: 'PENDING',
+        proofImageUrls: [],
+        payerComment: null,
+        confirmedAt: null,
+        acceptedAt: null,
+        rejectedAt: null,
+      },
+    })
+
+    if (leader && !isPayer) {
+      const payerOk = await prisma.user.findFirst({
+        where: { id: rec.payerUserId, isActive: true },
+        select: { id: true },
+      })
+      if (payerOk) {
+        await prisma.notification.create({
+          data: {
+            userId: rec.payerUserId,
+            type: 'PAYMENT_REQUEST',
+            title: 'Yêu cầu thanh toán lại (tổng kết)',
+            body: `Trưởng nhóm yêu cầu bạn nộp lại chứng từ cho khoản trong «${rec.settlement?.title ?? 'tổng kết'}».`,
+            settlementId,
+            data: {
+              groupId,
+              settlementId,
+              paymentRecordId: rec.id,
+              kind: 'settlement_reopen',
+            },
+          },
+        })
+      }
+    }
+
+    return c.json({ data: { ok: true } })
+  },
+)
 
 groupSettlementRoutes.post('/:settlementId/payments/:paymentRecordId/request-review', async (c) => {
   const userId = c.get('userId')
@@ -728,7 +733,10 @@ groupSettlementRoutes.post('/:settlementId/payments/accept', async (c) => {
   if (rec.status === 'PENDING') {
     if (userId === rec.payerUserId) {
       return c.json(
-        { error: 'Người trả vui lòng nộp chứng từ chuyển khoản; không dùng xác nhận phía người nhận' },
+        {
+          error:
+            'Người trả vui lòng nộp chứng từ chuyển khoản; không dùng xác nhận phía người nhận',
+        },
         403,
       )
     }
@@ -737,7 +745,10 @@ groupSettlementRoutes.post('/:settlementId/payments/accept', async (c) => {
     }
     if (!parsed.data.accepted) {
       return c.json(
-        { error: 'Khi chưa có chứng từ từ người trả, chỉ có thể xác nhận đã nhận tiền (không từ chối ở bước này)' },
+        {
+          error:
+            'Khi chưa có chứng từ từ người trả, chỉ có thể xác nhận đã nhận tiền (không từ chối ở bước này)',
+        },
         400,
       )
     }

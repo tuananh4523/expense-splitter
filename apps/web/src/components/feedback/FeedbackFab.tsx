@@ -12,7 +12,12 @@ export function FeedbackFab() {
   const { status } = useSession()
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [form] = Form.useForm<{ kind: FeedbackKind; rating?: number; title?: string; description?: string }>()
+  const [form] = Form.useForm<{
+    kind: FeedbackKind
+    rating?: number
+    title?: string
+    description?: string
+  }>()
   const [images, setImages] = useState<string[]>([])
   const kind = Form.useWatch('kind', form)
 
@@ -101,7 +106,12 @@ export function FeedbackFab() {
         destroyOnClose
         width={480}
       >
-        <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ kind: 'PRAISE', rating: 5 }}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          initialValues={{ kind: 'PRAISE', rating: 5 }}
+        >
           <Form.Item
             name="kind"
             label="Bạn muốn"
@@ -145,7 +155,12 @@ export function FeedbackFab() {
                 label="Mô tả chi tiết"
                 rules={[{ required: true, message: 'Nhập mô tả' }]}
               >
-                <Input.TextArea rows={4} placeholder="Các bước tái hiện, kỳ vọng…" maxLength={5000} showCount />
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Các bước tái hiện, kỳ vọng…"
+                  maxLength={5000}
+                  showCount
+                />
               </Form.Item>
               <Form.Item label="Ảnh minh họa (tuỳ chọn)">
                 <FeedbackImageUpload value={images} onChange={setImages} maxCount={10} />

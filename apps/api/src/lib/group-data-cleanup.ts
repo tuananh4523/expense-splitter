@@ -16,7 +16,9 @@ export type GroupOperationalCleanupResult = {
  * Xóa: toàn bộ comment trong nhóm; log nhóm + audit; mọi giao dịch quỹ (reset số dư về 0);
  * các đợt tổng kết COMPLETED cùng chi tiêu thuộc đợt đó.
  */
-export async function cleanupGroupOperationalData(groupId: string): Promise<GroupOperationalCleanupResult | null> {
+export async function cleanupGroupOperationalData(
+  groupId: string,
+): Promise<GroupOperationalCleanupResult | null> {
   const exists = await prisma.group.findUnique({ where: { id: groupId }, select: { id: true } })
   if (!exists) return null
 
@@ -61,15 +63,21 @@ export async function cleanupGroupOperationalData(groupId: string): Promise<Grou
           })
           const standaloneIds = standalones.map((s) => s.id)
           if (standaloneIds.length > 0) {
-            const pr = await tx.paymentRecord.deleteMany({ where: { standalonePaymentId: { in: standaloneIds } } })
+            const pr = await tx.paymentRecord.deleteMany({
+              where: { standalonePaymentId: { in: standaloneIds } },
+            })
             paymentRecordsDeleted += pr.count
           }
         }
 
-        const prSet = await tx.paymentRecord.deleteMany({ where: { settlementId: { in: completedIds } } })
+        const prSet = await tx.paymentRecord.deleteMany({
+          where: { settlementId: { in: completedIds } },
+        })
         paymentRecordsDeleted += prSet.count
 
-        const n = await tx.notification.deleteMany({ where: { settlementId: { in: completedIds } } })
+        const n = await tx.notification.deleteMany({
+          where: { settlementId: { in: completedIds } },
+        })
         notificationsDeleted = n.count
 
         if (expenseIds.length > 0) {

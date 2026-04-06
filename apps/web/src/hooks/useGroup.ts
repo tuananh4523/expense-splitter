@@ -1,5 +1,5 @@
-import { api } from '@/lib/api'
 import { notificationKeys } from '@/hooks/useNotifications'
+import { api } from '@/lib/api'
 import type {
   CreateGroupInput,
   GroupActivityLogDto,
@@ -21,7 +21,9 @@ export const groupKeys = {
     [...groupKeys.all, 'activity', id, filters] as const,
 }
 
-function activityLogQueryParams(filters: Partial<GroupActivityLogFilterInput>): Record<string, string | number> {
+function activityLogQueryParams(
+  filters: Partial<GroupActivityLogFilterInput>,
+): Record<string, string | number> {
   const out: Record<string, string | number> = {
     page: filters.page ?? 1,
     limit: filters.limit ?? 25,
@@ -47,7 +49,7 @@ export const useGroup = (groupId: string | undefined, opts?: { enabled?: boolean
   useQuery({
     queryKey: groupKeys.detail(groupId ?? ''),
     queryFn: () => api.get<{ data: GroupDto }>(`/groups/${groupId}`).then((r) => r.data.data),
-    enabled: Boolean(groupId) && (opts?.enabled !== false),
+    enabled: Boolean(groupId) && opts?.enabled !== false,
   })
 
 export const useCreateGroup = () => {
@@ -67,9 +69,7 @@ export const useGroupMembers = (groupId: string | undefined) =>
   useQuery({
     queryKey: groupKeys.members(groupId ?? ''),
     queryFn: () =>
-      api
-        .get<{ data: GroupMembersListDto }>(`/groups/${groupId}/members`)
-        .then((r) => r.data.data),
+      api.get<{ data: GroupMembersListDto }>(`/groups/${groupId}/members`).then((r) => r.data.data),
     enabled: Boolean(groupId),
   })
 
@@ -137,7 +137,12 @@ export const useJoinByInviteCode = () => {
   const router = useRouter()
   return useMutation({
     mutationFn: (inviteCode: string) =>
-      api.post<{ data: { ok: boolean; groupId: string; pendingApproval?: boolean } }>('/groups/join', { inviteCode }).then((r) => r.data.data),
+      api
+        .post<{ data: { ok: boolean; groupId: string; pendingApproval?: boolean } }>(
+          '/groups/join',
+          { inviteCode },
+        )
+        .then((r) => r.data.data),
     onSuccess: (d) => {
       void qc.invalidateQueries({ queryKey: groupKeys.all })
       if (!d.pendingApproval) {
@@ -150,8 +155,16 @@ export const useJoinByInviteCode = () => {
 export const useUpdateGroup = (groupId: string) => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { name?: string; description?: string | null; avatarUrl?: string | null; icon?: string; color?: string; requireApproval?: boolean }) =>
-      api.patch<{ data: GroupDto }>(`/groups/${groupId}`, data).then((r) => r.data.data),
+    mutationFn: (data: {
+      name?: string
+      description?: string | null
+      avatarUrl?: string | null
+      icon?: string
+      color?: string
+      requireApproval?: boolean
+      debtReminderEnabled?: boolean
+      debtReminderDays?: number
+    }) => api.patch<{ data: GroupDto }>(`/groups/${groupId}`, data).then((r) => r.data.data),
     onSuccess: (data) => {
       qc.setQueryData(groupKeys.detail(groupId), data)
       void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
@@ -205,7 +218,9 @@ export const useUpsertGroupFund = (groupId: string) => {
         return api.post(`/groups/${groupId}/fund`, {}).then((r) => r.data)
       }
       if (opts.lowThreshold != null) {
-        return api.patch(`/groups/${groupId}/fund`, { lowThreshold: opts.lowThreshold }).then((r) => r.data)
+        return api
+          .patch(`/groups/${groupId}/fund`, { lowThreshold: opts.lowThreshold })
+          .then((r) => r.data)
       }
       return Promise.resolve({})
     },
@@ -272,9 +287,12 @@ export const useAdminDeleteGroupActivityLogs = () => {
   return useMutation({
     mutationFn: (p: { groupId: string; before?: string }) =>
       api
-        .delete<{ data: { ok: boolean; deleted: number } }>(`/admin/groups/${p.groupId}/activity-logs`, {
-          params: p.before ? { before: p.before } : {},
-        })
+        .delete<{ data: { ok: boolean; deleted: number } }>(
+          `/admin/groups/${p.groupId}/activity-logs`,
+          {
+            params: p.before ? { before: p.before } : {},
+          },
+        )
         .then((r) => r.data.data),
     onSuccess: (_, p) => {
       void qc.invalidateQueries({ queryKey: [...groupKeys.all, 'activity', p.groupId] })
@@ -288,7 +306,9 @@ export const useGroupJoinRequests = (groupId: string | undefined, enabled = true
   useQuery({
     queryKey: [...groupKeys.all, 'joinRequests', groupId ?? ''] as const,
     queryFn: () =>
-      api.get<{ data: GroupJoinRequestDto[] }>(`/groups/${groupId}/join-requests`).then((r) => r.data.data),
+      api
+        .get<{ data: GroupJoinRequestDto[] }>(`/groups/${groupId}/join-requests`)
+        .then((r) => r.data.data),
     enabled: Boolean(groupId) && enabled,
   })
 

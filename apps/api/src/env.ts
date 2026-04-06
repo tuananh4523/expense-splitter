@@ -1,11 +1,11 @@
+import { existsSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 /**
  * Load env từ apps/api (import đầu tiên từ index).
  * Thứ tự giống Next.js: `.env` rồi `.env.local` (local ghi đè). Chỉ cần một trong hai.
  */
 import { config } from 'dotenv'
-import { existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const apiDir = dirname(fileURLToPath(import.meta.url))
 const apiRoot = resolve(apiDir, '..')

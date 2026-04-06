@@ -18,8 +18,7 @@ export const sessionKeys = {
 export function useSessions(enabled: boolean) {
   return useQuery({
     queryKey: sessionKeys.list,
-    queryFn: () =>
-      api.get<{ data: SessionRow[] }>('/users/me/sessions').then((r) => r.data.data),
+    queryFn: () => api.get<{ data: SessionRow[] }>('/users/me/sessions').then((r) => r.data.data),
     enabled,
   })
 }

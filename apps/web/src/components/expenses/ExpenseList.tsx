@@ -1,9 +1,13 @@
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { fmtDate } from '@/utils/date'
-import { expenseLockedForEditDelete, expenseStatusColor, expenseStatusLabel } from '@/utils/expenseStatusDisplay'
-import { Icon } from '@iconify/react'
+import {
+  expenseLockedForEditDelete,
+  expenseStatusColor,
+  expenseStatusLabel,
+} from '@/utils/expenseStatusDisplay'
 import type { ExpenseDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 import { Button, Popconfirm, Table, Tag, Tooltip } from 'antd'
 import type { TagProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -55,7 +59,9 @@ export function ExpenseList({
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
-      render: (v: string) => <CurrencyDisplay amount={v} className="whitespace-nowrap font-medium tabular-nums" />,
+      render: (v: string) => (
+        <CurrencyDisplay amount={v} className="whitespace-nowrap font-medium tabular-nums" />
+      ),
     },
     {
       title: 'Ngày',
@@ -106,7 +112,11 @@ export function ExpenseList({
       align: 'right',
       width: 80,
       render: (_, r) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {r.isStandalone ? (
             <Tooltip title="Thanh toán riêng">
               <Button
@@ -135,7 +145,12 @@ export function ExpenseList({
               onConfirm={() => onDeleteExpense(r.id)}
             >
               <Tooltip title="Xoá chi tiêu">
-                <Button type="text" size="small" danger icon={<Icon icon="mdi:trash-can-outline" width={16} />} />
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  icon={<Icon icon="mdi:trash-can-outline" width={16} />}
+                />
               </Tooltip>
             </Popconfirm>
           ) : null}
@@ -162,7 +177,9 @@ export function ExpenseList({
       loading={loading}
       columns={columns}
       dataSource={data}
-      rowClassName={(record) => (record.standaloneAttention ? 'expense-row-standalone-attention' : '')}
+      rowClassName={(record) =>
+        record.standaloneAttention ? 'expense-row-standalone-attention' : ''
+      }
       pagination={{
         current: page,
         total,

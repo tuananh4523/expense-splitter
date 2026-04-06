@@ -18,11 +18,19 @@ async function main() {
   ]
 
   for (const cat of categories) {
-    await prisma.category.upsert({
-      where: { name: cat.name },
-      update: { icon: cat.icon, color: cat.color, isSystem: cat.isSystem },
-      create: cat,
+    const existing = await prisma.category.findFirst({
+      where: { name: cat.name, groupId: null },
     })
+    if (existing) {
+      await prisma.category.update({
+        where: { id: existing.id },
+        data: { icon: cat.icon, color: cat.color, isSystem: cat.isSystem },
+      })
+    } else {
+      await prisma.category.create({
+        data: cat,
+      })
+    }
   }
 
   // ── Test users ───────────────────────────────────

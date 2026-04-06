@@ -31,11 +31,13 @@ export function FundOverview({
       >
         Số dư hiện tại
       </Typography.Text>
-      <CurrencyDisplay amount={fund?.balance ?? 0} className="text-2xl font-semibold tabular-nums" />
+      <CurrencyDisplay
+        amount={fund?.balance ?? 0}
+        className="text-2xl font-semibold tabular-nums"
+      />
       {fund ? (
         <Typography.Paragraph type="secondary" className="mt-2 mb-0 text-sm">
-          Ngưỡng cảnh báo:{' '}
-          <CurrencyDisplay amount={fund.lowThreshold} className="tabular-nums" />
+          Ngưỡng cảnh báo: <CurrencyDisplay amount={fund.lowThreshold} className="tabular-nums" />
         </Typography.Paragraph>
       ) : null}
       {fund ? (

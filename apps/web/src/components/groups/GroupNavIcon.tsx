@@ -1,5 +1,5 @@
-import { Icon } from '@iconify/react'
 import type { GroupDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 
 export function GroupNavIcon({
   group,

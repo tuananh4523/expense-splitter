@@ -16,7 +16,9 @@ export function SettlementSummary({ balances }: { balances: MemberBalance[] }) {
     {
       title: (
         <Tooltip title="Nộp quỹ đã duyệt (theo ngày duyệt) và trừ khấu trừ quỹ (theo ngày giao dịch) trong kỳ — cộng vào cân bằng trước khi tính ai trả ai.">
-          <span className="cursor-help border-b border-dotted border-stone-300">Quỹ (trong kỳ)</span>
+          <span className="cursor-help border-b border-dotted border-stone-300">
+            Quỹ (trong kỳ)
+          </span>
         </Tooltip>
       ),
       key: 'fundNetInPeriod',

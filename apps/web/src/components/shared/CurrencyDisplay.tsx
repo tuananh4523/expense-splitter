@@ -21,8 +21,7 @@ export function CurrencyDisplay({
     return <span className={className}>{text}</span>
   }
   const role = colorizeRole ?? 'owed'
-  const color =
-    n > 0 ? (role === 'owe' ? '#d63638' : '#00a32a') : '#d63638'
+  const color = n > 0 ? (role === 'owe' ? '#d63638' : '#00a32a') : '#d63638'
   return (
     <span className={className} style={{ color }}>
       {text}

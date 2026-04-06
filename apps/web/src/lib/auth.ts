@@ -139,9 +139,7 @@ export const authOptions: NextAuthOptions = {
         if (token.email != null) session.user.email = token.email
         if (token.name != null) session.user.name = token.name
         session.user.image =
-          token.picture !== undefined && token.picture !== null
-            ? (token.picture as string)
-            : null
+          token.picture !== undefined && token.picture !== null ? (token.picture as string) : null
       }
       session.accessToken = token.accessToken as string
       return session

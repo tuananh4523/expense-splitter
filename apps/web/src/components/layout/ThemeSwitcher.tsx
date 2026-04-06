@@ -1,12 +1,7 @@
 import { useAppUiTheme } from '@/theme/AppThemeProvider'
-import {
-  UI_THEME_IDS,
-  UI_THEME_LABELS,
-  UI_THEME_SWATCHES,
-  type UiThemeId,
-} from '@expense/types'
 import { BgColorsOutlined, CheckOutlined } from '@ant-design/icons'
-import { App, Button, Popover } from 'antd'
+import { UI_THEME_IDS, UI_THEME_LABELS, UI_THEME_SWATCHES, type UiThemeId } from '@expense/types'
+import { App, Popover } from 'antd'
 import { useState } from 'react'
 
 export function ThemeSwitcher() {
@@ -38,9 +33,7 @@ export function ThemeSwitcher() {
               title={UI_THEME_LABELS[id]}
               onClick={() => void pick(id)}
               className={`flex flex-col items-center gap-1 rounded-lg border-2 p-1.5 transition-colors ${
-                active
-                  ? 'border-brand bg-brand-soft'
-                  : 'border-transparent hover:bg-page'
+                active ? 'border-brand bg-brand-soft' : 'border-transparent hover:bg-page'
               }`}
             >
               <div className="flex h-3.5 w-[52px] max-w-full overflow-hidden rounded-sm">

@@ -1,20 +1,20 @@
 import './env.js'
-import { getRequestListener } from '@hono/node-server'
 import { createServer } from 'node:http'
+import { getRequestListener } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
+import { attachSocketServer } from './realtime/socket.js'
 import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
 import { dashboardRoutes } from './routes/dashboard.js'
 import { feedbackRoutes } from './routes/feedback.js'
-import { categoryRoutes, notificationRoutes } from './routes/misc.js'
 import { groupRoutes } from './routes/groups.js'
+import { categoryRoutes, notificationRoutes } from './routes/misc.js'
 import { uploadRoutes } from './routes/upload.js'
 import { userRoutes } from './routes/users.js'
-import { attachSocketServer } from './realtime/socket.js'
 
 const jwtSecret = process.env.JWT_SECRET?.trim() ?? ''
 if (!jwtSecret || jwtSecret.length < 8) {
@@ -64,7 +64,9 @@ app.route('/api/admin', adminRoutes)
 // import { categoryRoutes }   from './routes/categories'
 // import { notifRoutes }      from './routes/notifications'
 // import { uploadRoutes }     from './routes/upload'
-// import { cronRoutes }       from './routes/cron'
+import { cronRoutes } from './routes/cron.js'
+
+app.route('/api/cron', cronRoutes)
 
 // ── 404 fallback ──────────────────────────────────
 app.notFound((c) => c.json({ error: 'Not found' }, 404))

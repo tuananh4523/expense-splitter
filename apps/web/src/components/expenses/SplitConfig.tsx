@@ -1,4 +1,8 @@
-import { MoneyInputNumber, moneyDigitsKeyDown, moneyDigitsPaste } from '@/components/shared/MoneyInputNumber'
+import {
+  MoneyInputNumber,
+  moneyDigitsKeyDown,
+  moneyDigitsPaste,
+} from '@/components/shared/MoneyInputNumber'
 import { formatVND } from '@/utils/currency'
 import type { MemberDto } from '@expense/types'
 import { Alert, InputNumber, Switch, Table, Tag, Typography } from 'antd'
@@ -139,7 +143,12 @@ export function SplitConfig({
               return (
                 <span className="inline-flex flex-wrap items-center gap-1.5">
                   <span>{m.user.name}</span>
-                  <Tag className="m-0" color={m.role === 'LEADER' ? 'blue' : m.role === 'VICE_LEADER' ? 'cyan' : 'default'}>
+                  <Tag
+                    className="m-0"
+                    color={
+                      m.role === 'LEADER' ? 'blue' : m.role === 'VICE_LEADER' ? 'cyan' : 'default'
+                    }
+                  >
                     {rl}
                   </Tag>
                 </span>

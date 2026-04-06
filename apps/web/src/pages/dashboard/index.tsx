@@ -1,14 +1,11 @@
 import { ExpenseCharts } from '@/components/dashboard/ExpenseCharts'
-import { GroupCard } from '@/components/groups/GroupCard'
 import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
-import { EmptyState } from '@/components/shared/EmptyState'
 import { OverviewHighlightCard } from '@/components/shared/OverviewHighlightCard'
 import { useDashboardSummary } from '@/hooks/useDashboard'
 import { useGroups } from '@/hooks/useGroup'
 import { withAuth } from '@/utils/withAuth'
-import { LoadingOutlined } from '@ant-design/icons'
-import { Col, Row, Spin, Typography } from 'antd'
+import { Col, Row, Typography } from 'antd'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 
@@ -66,12 +63,7 @@ export default function DashboardPage() {
             showChevron
             loading={statLoading}
           >
-            <CurrencyDisplay
-              amount={debt}
-              colorize
-              colorizeRole="owe"
-              className={valueClass}
-            />
+            <CurrencyDisplay amount={debt} colorize colorizeRole="owe" className={valueClass} />
           </OverviewHighlightCard>
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -84,12 +76,7 @@ export default function DashboardPage() {
             showChevron
             loading={statLoading}
           >
-            <CurrencyDisplay
-              amount={credit}
-              colorize
-              colorizeRole="owed"
-              className={valueClass}
-            />
+            <CurrencyDisplay amount={credit} colorize colorizeRole="owed" className={valueClass} />
           </OverviewHighlightCard>
         </Col>
         <Col xs={24} sm={12} lg={6}>

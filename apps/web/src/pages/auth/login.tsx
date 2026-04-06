@@ -1,4 +1,8 @@
-import { loginSchema, type LoginInput } from '@expense/types'
+import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
+import { APP_AUTHOR, APP_AUTHOR_GITHUB_URL, APP_NAME } from '@/config/app'
+import { SITE_DESCRIPTION, pageTitle } from '@/config/site'
+import { withGuest } from '@/utils/withAuth'
+import { type LoginInput, loginSchema } from '@expense/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Icon } from '@iconify/react'
 import { Button, Input } from 'antd'
@@ -8,15 +12,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
-import {
-  APP_AUTHOR,
-  APP_AUTHOR_GITHUB_URL,
-  APP_AUTHOR_LINKEDIN_URL,
-  APP_NAME,
-} from '@/config/app'
-import { pageTitle, SITE_DESCRIPTION } from '@/config/site'
-import { withGuest } from '@/utils/withAuth'
 
 export const getServerSideProps = withGuest
 
@@ -37,7 +32,9 @@ export default function LoginPage() {
     if (r === 'locked') {
       setError('Tài khoản của bạn đã bị khóa. Liên hệ quản trị viên nếu cần hỗ trợ.')
     } else if (r === 'idle') {
-      setError('Phiên đã hết hạn do không hoạt động trong thời gian quy định. Vui lòng đăng nhập lại.')
+      setError(
+        'Phiên đã hết hạn do không hoạt động trong thời gian quy định. Vui lòng đăng nhập lại.',
+      )
     } else if (r === 'session') {
       setError('Phiên đăng nhập không còn hiệu lực hoặc đã hết hạn. Vui lòng đăng nhập lại.')
     }
@@ -125,7 +122,9 @@ export default function LoginPage() {
                     id="login-password"
                     size="large"
                     placeholder="••••••••"
-                    prefix={<Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />}
+                    prefix={
+                      <Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />
+                    }
                     status={formState.errors.password ? 'error' : ''}
                   />
                 )}

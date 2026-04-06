@@ -4,6 +4,7 @@ export function groupActivityActionVi(code: string): string {
     EXPENSE_CREATED: 'Tạo chi tiêu',
     EXPENSE_UPDATED: 'Cập nhật chi tiêu',
     EXPENSE_DELETED: 'Xóa chi tiêu',
+    EXPENSE_RESTORED: 'Khôi phục chi tiêu',
     MEMBER_JOINED_INVITE: 'Tham gia nhóm (mã mời)',
     MEMBER_INVITED: 'Gửi lời mời email (chờ xác nhận)',
     MEMBER_REMOVED: 'Gỡ thành viên',

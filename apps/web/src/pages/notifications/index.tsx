@@ -1,10 +1,10 @@
 import AppLayout from '@/components/layout/AppLayout'
 import { useMarkRead, useNotifications } from '@/hooks/useNotifications'
-import { getNotificationTargetPath } from '@/utils/notificationPath'
 import { timeAgo } from '@/utils/date'
+import { getNotificationTargetPath } from '@/utils/notificationPath'
 import { withAuth } from '@/utils/withAuth'
-import { Icon } from '@iconify/react'
 import type { NotificationDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 import { App, Button, Spin, Typography } from 'antd'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
@@ -86,16 +86,17 @@ export default function NotificationsPage() {
                   {item.title}
                 </Typography.Text>
                 {item.body ? (
-                  <div className="mt-0.5 text-[13px] leading-snug text-wp-slate">
-                    {item.body}
-                  </div>
+                  <div className="mt-0.5 text-[13px] leading-snug text-wp-slate">{item.body}</div>
                 ) : null}
                 <Typography.Text type="secondary" className="mt-1.5 block text-xs">
                   {timeAgo(item.createdAt)}
                 </Typography.Text>
               </div>
               {!item.isRead && (
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand" aria-label="Chưa đọc" />
+                <span
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand"
+                  aria-label="Chưa đọc"
+                />
               )}
             </button>
           ))}

@@ -1,9 +1,9 @@
 import { NotificationBellDropdown } from '@/components/layout/NotificationBellDropdown'
+import { APP_NAME } from '@/config/app'
 import { useUnreadCount } from '@/hooks/useNotifications'
 import { BellOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { Avatar, Button, Dropdown, Grid } from 'antd'
-import { APP_NAME } from '@/config/app'
 import { signOut, useSession } from 'next-auth/react'
 
 const { useBreakpoint } = Grid

@@ -33,7 +33,10 @@ export const useApproveFundContribution = (groupId: string) => {
   return useMutation({
     mutationFn: (transactionId: string) =>
       api
-        .post<{ data: FundDto }>(`/groups/${groupId}/fund/contributions/${transactionId}/approve`, {})
+        .post<{ data: FundDto }>(
+          `/groups/${groupId}/fund/contributions/${transactionId}/approve`,
+          {},
+        )
         .then((r) => r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: fundKeys.detail(groupId) })
@@ -47,9 +50,12 @@ export const useRejectFundContribution = (groupId: string) => {
   return useMutation({
     mutationFn: (p: { transactionId: string; note?: string }) =>
       api
-        .post<{ data: FundDto }>(`/groups/${groupId}/fund/contributions/${p.transactionId}/reject`, {
-          note: p.note,
-        })
+        .post<{ data: FundDto }>(
+          `/groups/${groupId}/fund/contributions/${p.transactionId}/reject`,
+          {
+            note: p.note,
+          },
+        )
         .then((r) => r.data.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: fundKeys.detail(groupId) })

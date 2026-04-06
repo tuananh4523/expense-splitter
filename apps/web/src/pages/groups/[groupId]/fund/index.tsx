@@ -3,18 +3,25 @@ import { FundOverview } from '@/components/fund/FundOverview'
 import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { ResolvedImageList } from '@/components/shared/ResolvedImageList'
+import { useApproveFundContribution, useFund, useRejectFundContribution } from '@/hooks/useFund'
 import { useGroup } from '@/hooks/useGroup'
-import {
-  useApproveFundContribution,
-  useFund,
-  useRejectFundContribution,
-} from '@/hooks/useFund'
 import { fmtDateTime } from '@/utils/date'
 import { withAuth } from '@/utils/withAuth'
 import { WalletOutlined } from '@ant-design/icons'
-import { Icon } from '@iconify/react'
 import type { FundTransactionDto } from '@expense/types'
-import { App, Avatar, Button, Input, Modal, Popconfirm, Space, Table, Tooltip, Typography } from 'antd'
+import { Icon } from '@iconify/react'
+import {
+  App,
+  Avatar,
+  Button,
+  Input,
+  Modal,
+  Popconfirm,
+  Space,
+  Table,
+  Tooltip,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
@@ -48,8 +55,7 @@ export default function GroupFundPage() {
 
   const myRole = group?.myRole
   const isAdmin = session?.user?.role === 'ADMIN'
-  const canReview =
-    isAdmin || myRole === 'LEADER' || myRole === 'VICE_LEADER'
+  const canReview = isAdmin || myRole === 'LEADER' || myRole === 'VICE_LEADER'
 
   const pendingReviewCount = useMemo(
     () =>
@@ -67,7 +73,9 @@ export default function GroupFundPage() {
         key: 'createdAt',
         width: 168,
         render: (d: string) => (
-          <span className="whitespace-nowrap tabular-nums text-sm text-wp-charcoal">{fmtDateTime(d)}</span>
+          <span className="whitespace-nowrap tabular-nums text-sm text-wp-charcoal">
+            {fmtDateTime(d)}
+          </span>
         ),
       },
       {
@@ -104,7 +112,10 @@ export default function GroupFundPage() {
         width: 200,
         render: (_, r) => {
           const st = contributionStatusLabel(r)
-          if (!st && !(r.reviewedBy && r.contributionStatus && r.contributionStatus !== 'PENDING')) {
+          if (
+            !st &&
+            !(r.reviewedBy && r.contributionStatus && r.contributionStatus !== 'PENDING')
+          ) {
             return <span className="text-sm text-stone-300">—</span>
           }
           return (
@@ -112,7 +123,8 @@ export default function GroupFundPage() {
               {st ? <div className="text-sm text-wp-charcoal">{st}</div> : null}
               {r.reviewedBy && r.contributionStatus && r.contributionStatus !== 'PENDING' ? (
                 <Typography.Text type="secondary" className="!block text-xs leading-snug">
-                  {r.contributionStatus === 'APPROVED' ? 'Duyệt bởi' : 'Từ chối bởi'} {r.reviewedBy.name}
+                  {r.contributionStatus === 'APPROVED' ? 'Duyệt bởi' : 'Từ chối bởi'}{' '}
+                  {r.reviewedBy.name}
                   {r.reviewedAt ? ` · ${fmtDateTime(r.reviewedAt)}` : ''}
                 </Typography.Text>
               ) : null}
@@ -256,9 +268,7 @@ export default function GroupFundPage() {
         </section>
       </div>
 
-      {open ? (
-        <ContributeModal open onClose={() => setOpen(false)} groupId={groupId} />
-      ) : null}
+      {open ? <ContributeModal open onClose={() => setOpen(false)} groupId={groupId} /> : null}
 
       <Modal
         title="Từ chối nộp quỹ"

@@ -4,9 +4,21 @@ import { api } from '@/lib/api'
 import { withAdmin } from '@/utils/withAdmin'
 import { PlusOutlined } from '@ant-design/icons'
 import { Icon } from '@iconify/react'
-import { App, Button, Form, Input, Modal, Popconfirm, Space, Switch, Table, Tag, Tooltip } from 'antd'
-import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  App,
+  Button,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd'
+import { useMemo, useState } from 'react'
 
 export const getServerSideProps = withAdmin()
 
@@ -156,7 +168,10 @@ export default function AdminCategoriesPage() {
                       setEdit(r)
                       setName(r.name)
                       setIsSystem(r.isSystem)
-                      setIconData({ icon: r.icon ?? 'mdi:wallet-outline', color: r.color ?? '#0073AA' })
+                      setIconData({
+                        icon: r.icon ?? 'mdi:wallet-outline',
+                        color: r.color ?? '#0073AA',
+                      })
                       setOpen(true)
                     }}
                   />

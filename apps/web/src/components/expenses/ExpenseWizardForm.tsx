@@ -15,14 +15,27 @@ import {
   useUpdateExpense,
 } from '@/hooks/useExpenses'
 import { useGroupMembers } from '@/hooks/useGroup'
-import { Icon } from '@iconify/react'
 import type { CreateExpenseInput } from '@expense/types'
 import { createExpenseSchema, expenseTagsField, normalizeExpenseTags } from '@expense/types'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { App, Button, Checkbox, Col, DatePicker, Form, Input, Radio, Row, Select, Spin, Steps } from 'antd'
+import { Icon } from '@iconify/react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  App,
+  Button,
+  Checkbox,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Radio,
+  Row,
+  Select,
+  Spin,
+  Steps,
+} from 'antd'
 import dayjs from 'dayjs'
 import { useSession } from 'next-auth/react'
-import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, type FieldErrors, type Resolver, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -122,13 +135,14 @@ export function ExpenseWizardForm({
   const editSeedSigRef = useRef<string | null>(null)
   const [editFormReady, setEditFormReady] = useState(false)
 
-  const { control, handleSubmit, trigger, watch, getValues, setValue, reset, formState } = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as Resolver<FormValues>,
-    defaultValues: defaultFormValues,
-    // Mặc định onSubmit + reValidate sau submit: lỗi từ trigger() (bước 1) không tự xoá khi gõ.
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-  })
+  const { control, handleSubmit, trigger, watch, getValues, setValue, reset, formState } =
+    useForm<FormValues>({
+      resolver: zodResolver(formSchema) as Resolver<FormValues>,
+      defaultValues: defaultFormValues,
+      // Mặc định onSubmit + reValidate sau submit: lỗi từ trigger() (bước 1) không tự xoá khi gõ.
+      mode: 'onChange',
+      reValidateMode: 'onChange',
+    })
 
   const amount = watch('amount')
   const splitTypeForm = watch('splitType')
@@ -192,16 +206,18 @@ export function ExpenseWizardForm({
       recurringDays: undefined,
     })
 
-    const rows: SplitRowState[] = buildDefaultSplitRows(selectableMembers).map((r): SplitRowState => {
-      const existing = expense.splits.find((s) => s.userId === r.userId)
-      if (!existing) return { userId: r.userId, isExcluded: true }
-      return {
-        userId: r.userId,
-        isExcluded: Boolean(existing.isExcluded),
-        amount: Number(existing.amount),
-        ...(existing.percentage != null ? { percentage: Number(existing.percentage) } : {}),
-      }
-    })
+    const rows: SplitRowState[] = buildDefaultSplitRows(selectableMembers).map(
+      (r): SplitRowState => {
+        const existing = expense.splits.find((s) => s.userId === r.userId)
+        if (!existing) return { userId: r.userId, isExcluded: true }
+        return {
+          userId: r.userId,
+          isExcluded: Boolean(existing.isExcluded),
+          amount: Number(existing.amount),
+          ...(existing.percentage != null ? { percentage: Number(existing.percentage) } : {}),
+        }
+      },
+    )
     setSplitValue({ splitType: expense.splitType as FormValues['splitType'], rows })
     editSeedSigRef.current = sig
     setEditFormReady(true)
@@ -269,14 +285,18 @@ export function ExpenseWizardForm({
     const t = getValues('amount')
     const total = Number.isFinite(t) && t > 0 ? t : 0
     if (splitValue.splitType === 'UNEQUAL') {
-      const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.amount ?? 0), 0)
+      const sum = splitValue.rows
+        .filter((r) => !r.isExcluded)
+        .reduce((s, r) => s + (r.amount ?? 0), 0)
       if (Math.abs(sum - total) > 0.01) {
         void message.error('Tổng phần chia phải bằng số tiền')
         return
       }
     }
     if (splitValue.splitType === 'PERCENTAGE') {
-      const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.percentage ?? 0), 0)
+      const sum = splitValue.rows
+        .filter((r) => !r.isExcluded)
+        .reduce((s, r) => s + (r.percentage ?? 0), 0)
       if (Math.abs(sum - 100) > 0.01) {
         void message.error('Tổng phần trăm phải bằng 100%')
         return
@@ -314,14 +334,18 @@ export function ExpenseWizardForm({
       const t = getValues('amount')
       const total = Number.isFinite(t) && t > 0 ? t : 0
       if (splitValue.splitType === 'UNEQUAL') {
-        const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.amount ?? 0), 0)
+        const sum = splitValue.rows
+          .filter((r) => !r.isExcluded)
+          .reduce((s, r) => s + (r.amount ?? 0), 0)
         if (Math.abs(sum - total) > 0.01) {
           void message.error('Tổng phần chia phải bằng số tiền')
           return
         }
       }
       if (splitValue.splitType === 'PERCENTAGE') {
-        const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.percentage ?? 0), 0)
+        const sum = splitValue.rows
+          .filter((r) => !r.isExcluded)
+          .reduce((s, r) => s + (r.percentage ?? 0), 0)
         if (Math.abs(sum - 100) > 0.01) {
           void message.error('Tổng phần trăm phải bằng 100%')
           return
@@ -345,7 +369,9 @@ export function ExpenseWizardForm({
     }
     const st = vals.splitType
     if (st === 'UNEQUAL') {
-      const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.amount ?? 0), 0)
+      const sum = splitValue.rows
+        .filter((r) => !r.isExcluded)
+        .reduce((s, r) => s + (r.amount ?? 0), 0)
       if (Math.abs(sum - total) > 0.01) {
         void message.error('Tổng phần chia phải bằng số tiền')
         setStep(1)
@@ -353,7 +379,9 @@ export function ExpenseWizardForm({
       }
     }
     if (st === 'PERCENTAGE') {
-      const sum = splitValue.rows.filter((r) => !r.isExcluded).reduce((s, r) => s + (r.percentage ?? 0), 0)
+      const sum = splitValue.rows
+        .filter((r) => !r.isExcluded)
+        .reduce((s, r) => s + (r.percentage ?? 0), 0)
       if (Math.abs(sum - 100) > 0.01) {
         void message.error('Tổng phần trăm phải bằng 100%')
         setStep(1)
@@ -464,7 +492,11 @@ export function ExpenseWizardForm({
             validateStatus={formState.errors.title ? 'error' : ''}
             help={formState.errors.title?.message}
           >
-            <Controller name="title" control={control} render={({ field }) => <Input {...field} />} />
+            <Controller
+              name="title"
+              control={control}
+              render={({ field }) => <Input {...field} />}
+            />
           </Form.Item>
           <Form.Item
             label="Số tiền (VND)"
@@ -536,12 +568,18 @@ export function ExpenseWizardForm({
                       optionRender={(opt) => {
                         const cat =
                           categories.find((c) => c.id === opt.value) ??
-                          (mode === 'edit' && expense?.category?.id === opt.value ? expense?.category : undefined)
+                          (mode === 'edit' && expense?.category?.id === opt.value
+                            ? expense?.category
+                            : undefined)
                         if (!cat) return opt.label
                         return (
                           <span className="flex items-center gap-2">
                             {cat.icon ? (
-                              cat.icon.includes(':') ? <Icon icon={cat.icon} width={16} /> : <span>{cat.icon}</span>
+                              cat.icon.includes(':') ? (
+                                <Icon icon={cat.icon} width={16} />
+                              ) : (
+                                <span>{cat.icon}</span>
+                              )
                             ) : null}
                             {cat.name}
                           </span>
@@ -599,7 +637,12 @@ export function ExpenseWizardForm({
               name="expenseDate"
               control={control}
               render={({ field }) => (
-                <DatePicker className="w-full" format="DD/MM/YYYY" value={field.value} onChange={field.onChange} />
+                <DatePicker
+                  className="w-full"
+                  format="DD/MM/YYYY"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               )}
             />
           </Form.Item>
@@ -617,7 +660,9 @@ export function ExpenseWizardForm({
               render={({ field }) => (
                 <Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)}>
                   Chi riêng lẻ{' '}
-                  <span className="text-xs text-stone-400">(không tính vào chi tiêu chung khi tổng kết nhóm)</span>
+                  <span className="text-xs text-stone-400">
+                    (không tính vào chi tiêu chung khi tổng kết nhóm)
+                  </span>
                 </Checkbox>
               )}
             />
@@ -661,7 +706,12 @@ export function ExpenseWizardForm({
               name="imageUrls"
               control={control}
               render={({ field }) => (
-                <FileUpload value={field.value} onChange={field.onChange} groupId={groupId} uploadType="expense" />
+                <FileUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  groupId={groupId}
+                  uploadType="expense"
+                />
               )}
             />
           </Form.Item>

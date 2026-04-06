@@ -58,8 +58,11 @@ enum NotificationType {
   MEMBER_JOINED
   MEMBER_LEFT
   EXPENSE_ADDED
+  EXPENSE_DELETED
+  EXPENSE_RESTORED
   STANDALONE_REQUESTED
   GROUP_INVITE
+  DEBT_OVERDUE
   /**
    * Thông báo toàn hệ thống từ quản trị (một broadcastId chung cho mọi user nhận).
    */
@@ -125,6 +128,7 @@ model User {
   profile                   UserProfile?
   memberships               GroupMember[]
   paidExpenses              Expense[]          @relation("ExpensePayer")
+  deletedExpenses           Expense[]          @relation("ExpenseDeletedBy")
   splits                    ExpenseSplit[]
   comments                  Comment[]
   notifications             Notification[]
@@ -198,7 +202,8 @@ model BankAccount {
 
 model Category {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
+  groupId   String?
   icon      String?
   color     String?
   isSystem  Boolean  @default(false)
@@ -206,7 +211,9 @@ model Category {
   updatedAt DateTime @updatedAt
 
   expenses Expense[]
+  group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
+  @@unique([groupId, name])
   @@index([name])
 }
 
@@ -226,6 +233,8 @@ model Group {
   inviteExpires   DateTime?
   isActive        Boolean   @default(true)
   requireApproval Boolean   @default(false)
+  debtReminderEnabled Boolean @default(false)
+  debtReminderDays    Int     @default(7)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -237,6 +246,7 @@ model Group {
   activityLogs GroupActivityLog[]
   invites      GroupInvite[]
   joinRequests GroupJoinRequest[]
+  categories   Category[]
 
   @@index([inviteCode])
 }
@@ -318,6 +328,11 @@ model Expense {
   tags         String[]      @default([])
   imageUrls    String[]      @default([])
   /**
+   * Soft delete: null = còn hiệu lực; khác null = đã xoá (có thể khôi phục).
+   */
+  deletedAt        DateTime?
+  deletedByUserId  String?
+  /**
    * Đợt tổng kết (PENDING) đang khóa chi này; chi mới sau khi tạo đợt = null → không thuộc đợt cũ
    */
   settlementId String?
@@ -327,6 +342,7 @@ model Expense {
   group             Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
   category          Category?          @relation(fields: [categoryId], references: [id])
   paidBy            User               @relation("ExpensePayer", fields: [paidByUserId], references: [id])
+  deletedBy         User?              @relation("ExpenseDeletedBy", fields: [deletedByUserId], references: [id])
   settlement        Settlement?        @relation(fields: [settlementId], references: [id], onDelete: SetNull)
   splits            ExpenseSplit[]
   comments          Comment[]
@@ -342,6 +358,8 @@ model Expense {
   @@index([groupId, status])
   @@index([groupId, expenseDate])
   @@index([settlementId])
+  @@index([deletedAt])
+  @@index([groupId, deletedAt])
 }
 
 model ExpenseSplit {

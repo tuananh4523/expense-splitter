@@ -205,11 +205,16 @@ export function IconPicker({ value, onChange, size = 40 }: IconPickerProps) {
             onClick={() => handleSelectIcon(icon)}
             className="flex items-center justify-center rounded-lg p-1.5 transition-colors"
             style={{
-              border: selectedIcon === icon ? `2px solid ${selectedColor}` : '2px solid transparent',
+              border:
+                selectedIcon === icon ? `2px solid ${selectedColor}` : '2px solid transparent',
               background: selectedIcon === icon ? `${selectedColor}18` : 'transparent',
             }}
           >
-            <Icon icon={icon} width={22} color={selectedIcon === icon ? selectedColor : '#57534e'} />
+            <Icon
+              icon={icon}
+              width={22}
+              color={selectedIcon === icon ? selectedColor : '#57534e'}
+            />
           </button>
         ))}
       </div>

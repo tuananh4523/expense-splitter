@@ -43,6 +43,8 @@ export interface GroupDto {
   /** Nhóm còn hoạt động hay bị quản trị tạm khóa. */
   isActive: boolean
   requireApproval: boolean
+  debtReminderEnabled: boolean
+  debtReminderDays: number
   memberCount: number
   myRole: string
   fundBalance: string | null

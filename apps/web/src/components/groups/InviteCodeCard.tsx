@@ -85,9 +85,7 @@ export function InviteCodeCard({
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             type="primary"
-            icon={
-              <Icon icon={copyLinkOk ? 'mdi:check' : 'mdi:content-copy'} width={18} />
-            }
+            icon={<Icon icon={copyLinkOk ? 'mdi:check' : 'mdi:content-copy'} width={18} />}
             onClick={() => void copyLink()}
           >
             {copyLinkOk ? 'Đã copy' : 'Copy link'}

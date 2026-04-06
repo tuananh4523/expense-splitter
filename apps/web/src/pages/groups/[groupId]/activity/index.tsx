@@ -1,7 +1,7 @@
 import AppLayout from '@/components/layout/AppLayout'
 import { useAdminDeleteGroupActivityLogs, useGroup, useGroupActivityLogs } from '@/hooks/useGroup'
-import { fmtDate } from '@/utils/date'
 import { groupActivityActionVi, groupActivityTargetTypeVi } from '@/utils/activityLabels'
+import { fmtDate } from '@/utils/date'
 import { withAuth } from '@/utils/withAuth'
 import type { GroupActivityLogDto } from '@expense/types'
 import {
@@ -18,7 +18,7 @@ import {
   Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
+import type dayjs from 'dayjs'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
@@ -91,7 +91,10 @@ export default function GroupActivityPage() {
         <div>
           <div className="text-stone-800">{r.summary}</div>
           <div className="mt-0.5 text-xs text-stone-500">
-            {[groupActivityActionVi(r.action), r.targetType ? groupActivityTargetTypeVi(r.targetType) : '']
+            {[
+              groupActivityActionVi(r.action),
+              r.targetType ? groupActivityTargetTypeVi(r.targetType) : '',
+            ]
               .filter(Boolean)
               .join(' · ')}
           </div>
@@ -106,8 +109,9 @@ export default function GroupActivityPage() {
     <AppLayout title={group ? `Lịch sử — ${group.name}` : 'Lịch sử nhóm'}>
       <Space direction="vertical" size="large" className="w-full">
         <Typography.Paragraph type="secondary" className="!mb-0">
-          Nhật ký hoạt động lưu sẵn tên và email người thực hiện — xóa thành viên hoặc chi tiêu không làm mất dòng
-          lịch sử. Có thể lọc theo thời gian, từ khóa, loại đích và ẩn log liên quan chi riêng.
+          Nhật ký hoạt động lưu sẵn tên và email người thực hiện — xóa thành viên hoặc chi tiêu
+          không làm mất dòng lịch sử. Có thể lọc theo thời gian, từ khóa, loại đích và ẩn log liên
+          quan chi riêng.
         </Typography.Paragraph>
 
         <Card>
@@ -179,7 +183,8 @@ export default function GroupActivityPage() {
           <Card size="small" className="border-amber-200 bg-amber-50/60">
             <Space wrap>
               <Typography.Text className="text-amber-950">
-                Quản trị hệ thống: xóa log để giảm dữ liệu (không ảnh hưởng chi tiêu hay thành viên).
+                Quản trị hệ thống: xóa log để giảm dữ liệu (không ảnh hưởng chi tiêu hay thành
+                viên).
               </Typography.Text>
               <Popconfirm
                 title="Xóa toàn bộ lịch sử của nhóm này?"

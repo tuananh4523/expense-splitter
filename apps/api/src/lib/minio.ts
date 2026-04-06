@@ -16,11 +16,7 @@ export function parseMinioConnection(): { endPoint: string; port: number; useSSL
     try {
       const u = new URL(raw)
       const useSSL = u.protocol === 'https:'
-      const port = u.port
-        ? Number(u.port)
-        : Number(
-            process.env.MINIO_PORT ?? (useSSL ? 443 : 9000),
-          )
+      const port = u.port ? Number(u.port) : Number(process.env.MINIO_PORT ?? (useSSL ? 443 : 9000))
       return { endPoint: u.hostname, port, useSSL }
     } catch {
       return null
@@ -101,7 +97,11 @@ export function parseStoredObject(stored: string): { bucket: string; objectName:
   }
 }
 
-async function viewerMayAccessObject(viewerUserId: string, bucket: string, objectName: string): Promise<boolean> {
+async function viewerMayAccessObject(
+  viewerUserId: string,
+  bucket: string,
+  objectName: string,
+): Promise<boolean> {
   if (bucket !== minioBucket()) return false
   if (objectName.startsWith('avatars/')) {
     return true

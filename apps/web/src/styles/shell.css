@@ -65,16 +65,29 @@ html.layout-shell-collapsed .app-sider-brand-text {
   display: none !important;
 }
 
-html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item-disabled:has(.sidebar-section-label) {
+html.layout-shell-collapsed
+  .app-sider
+  .sidebar-menu
+  > .ant-menu-item-disabled:has(.sidebar-section-label) {
   display: none !important;
 }
 
 html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item .ant-menu-title-content,
-html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content {
+html.layout-shell-collapsed
+  .app-sider
+  .sidebar-menu
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-title-content {
   display: none !important;
 }
 
-html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+html.layout-shell-collapsed
+  .app-sider
+  .sidebar-menu
+  > .ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-submenu-arrow {
   display: none !important;
 }
 
@@ -82,11 +95,17 @@ html.layout-shell-collapsed .app-sider .sidebar-menu > .ant-menu-item-divider {
   margin: 6px 12px !important;
 }
 
-html.layout-shell-collapsed .app-sider .sidebar-menu.ant-menu-inline-collapsed li.ant-menu-item-disabled:has(.sidebar-section-label) {
+html.layout-shell-collapsed
+  .app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  li.ant-menu-item-disabled:has(.sidebar-section-label) {
   display: none !important;
 }
 
-html.layout-shell-collapsed .app-sider .sidebar-menu.ant-menu-inline-collapsed .ant-menu-item-divider {
+html.layout-shell-collapsed
+  .app-sider
+  .sidebar-menu.ant-menu-inline-collapsed
+  .ant-menu-item-divider {
   margin: 6px 12px !important;
 }
 

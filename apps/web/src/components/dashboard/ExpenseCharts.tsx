@@ -22,7 +22,10 @@ const defaultRange: [Dayjs, Dayjs] = [dayjs().subtract(30, 'd'), dayjs()]
 
 const rangePresets = [
   { label: '30 ngày qua', value: defaultRange },
-  { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs] },
+  {
+    label: 'Tháng này',
+    value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs],
+  },
   {
     label: 'Tháng trước',
     value: [
@@ -176,12 +179,17 @@ export function ExpenseCharts() {
                   </div>
                   <div className="mt-2 flex flex-wrap justify-center gap-3 overflow-y-auto max-h-[60px] pb-1">
                     {formattedPieData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-1.5 text-xs text-slate-600">
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-1.5 text-xs text-slate-600"
+                      >
                         <span
                           className="h-3 w-3 flex-shrink-0 rounded-full"
                           style={{ backgroundColor: item.color }}
                         />
-                        <span className="truncate max-w-[80px]" title={item.name}>{item.name}</span>
+                        <span className="truncate max-w-[80px]" title={item.name}>
+                          {item.name}
+                        </span>
                       </div>
                     ))}
                   </div>

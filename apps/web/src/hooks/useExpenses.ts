@@ -32,7 +32,11 @@ function patchExpenseInGroupListCaches(qc: QueryClient, groupId: string, updated
       predicate: (q) => {
         const k = q.queryKey
         return (
-          Array.isArray(k) && k.length >= 3 && k[0] === 'expenses' && k[1] === groupId && k[2] === 'list'
+          Array.isArray(k) &&
+          k.length >= 3 &&
+          k[0] === 'expenses' &&
+          k[1] === groupId &&
+          k[2] === 'list'
         )
       },
     },
@@ -82,13 +86,21 @@ export const useCategories = () =>
     queryFn: () =>
       api
         .get<{
-          data: { id: string; name: string; icon: string | null; color: string | null; isSystem: boolean }[]
+          data: {
+            id: string
+            name: string
+            icon: string | null
+            color: string | null
+            isSystem: boolean
+          }[]
         }>('/categories')
         .then((r) => r.data.data),
   })
 
 /** Gửi query chuỗi rõ ràng — tránh client/axios làm mất cờ boolean. */
-function expenseListQueryParams(filters: Partial<ExpenseFilterInput>): Record<string, string | number> {
+function expenseListQueryParams(
+  filters: Partial<ExpenseFilterInput>,
+): Record<string, string | number> {
   const out: Record<string, string | number> = {
     page: filters.page ?? 1,
     limit: filters.limit ?? 20,
@@ -98,6 +110,8 @@ function expenseListQueryParams(filters: Partial<ExpenseFilterInput>): Record<st
   if (filters.categoryId) out.categoryId = filters.categoryId
   if (filters.paidByUserId) out.paidByUserId = filters.paidByUserId
   if (filters.status) out.status = filters.status
+  if (filters.includeDeleted === true) out.includeDeleted = 'true'
+  if (filters.includeDeleted === false) out.includeDeleted = 'false'
   if (filters.isStandalone === true) out.isStandalone = 'true'
   if (filters.isStandalone === false) out.isStandalone = 'false'
   if (filters.standaloneIncomplete === true) out.standaloneIncomplete = 'true'
@@ -117,11 +131,7 @@ export const useExpenses = (groupId: string, filters: Partial<ExpenseFilterInput
     enabled: Boolean(groupId),
   })
 
-export const useExpense = (
-  groupId: string,
-  expenseId: string,
-  opts?: { staleTime?: number },
-) =>
+export const useExpense = (groupId: string, expenseId: string, opts?: { staleTime?: number }) =>
   useQuery({
     queryKey: expenseKeys.detail(groupId, expenseId),
     queryFn: () =>
@@ -164,6 +174,18 @@ export const useDeleteExpense = (groupId: string) => {
   })
 }
 
+export const useRestoreExpense = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (expenseId: string) =>
+      api.post(`/groups/${groupId}/expenses/${expenseId}/restore`).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: expenseKeys.all(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
+    },
+  })
+}
+
 export const useComments = (groupId: string, expenseId: string) =>
   useQuery({
     queryKey: expenseKeys.comments(groupId, expenseId),
@@ -190,7 +212,9 @@ export const useDeleteComment = (groupId: string, expenseId: string) => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (commentId: string) =>
-      api.delete(`/groups/${groupId}/expenses/${expenseId}/comments/${commentId}`).then((r) => r.data),
+      api
+        .delete(`/groups/${groupId}/expenses/${expenseId}/comments/${commentId}`)
+        .then((r) => r.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: expenseKeys.comments(groupId, expenseId) })
       void qc.invalidateQueries({ queryKey: expenseKeys.detail(groupId, expenseId) })
