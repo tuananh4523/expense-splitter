@@ -157,7 +157,9 @@ export default function GroupsPage() {
                 ))}
               </Row>
             ) : filterInEffect && allowedGroupIds && led.length > 0 ? (
-              <Typography.Text type="secondary">Không có nhóm quản lý nào trong bộ lọc này.</Typography.Text>
+              <Typography.Text type="secondary">
+                Không có nhóm quản lý nào trong bộ lọc này.
+              </Typography.Text>
             ) : !filterInEffect && led.length === 0 ? (
               <EmptyState description="Bạn chưa có nhóm do mình làm trưởng nhóm" />
             ) : null}
@@ -176,9 +178,13 @@ export default function GroupsPage() {
                 ))}
               </Row>
             ) : filterInEffect && allowedGroupIds && joined.length > 0 ? (
-              <Typography.Text type="secondary">Không có nhóm tham gia nào trong bộ lọc này.</Typography.Text>
+              <Typography.Text type="secondary">
+                Không có nhóm tham gia nào trong bộ lọc này.
+              </Typography.Text>
             ) : !filterInEffect && joined.length === 0 ? (
-              <Typography.Text type="secondary">Chưa tham gia nhóm nào với vai trò thành viên.</Typography.Text>
+              <Typography.Text type="secondary">
+                Chưa tham gia nhóm nào với vai trò thành viên.
+              </Typography.Text>
             ) : null}
           </section>
         </>

@@ -11,9 +11,7 @@ const patchMeBody = z.object({
   name: z.string().min(1).max(120).optional(),
   avatarUrl: z.string().url().max(2000).nullable().optional(),
   bio: z.string().max(300).nullable().optional(),
-  phone: z
-    .union([z.string().regex(/^0\d{9,10}$/), z.literal(''), z.null()])
-    .optional(),
+  phone: z.union([z.string().regex(/^0\d{9,10}$/), z.literal(''), z.null()]).optional(),
   uiTheme: uiThemeIdSchema.optional(),
 })
 
@@ -94,7 +92,9 @@ userRoutes.get('/me', async (c) => {
     prisma.user.findUnique({
       where: { id: userId },
       include: {
-        profile: { include: { bankAccounts: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } } },
+        profile: {
+          include: { bankAccounts: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } },
+        },
       },
     }),
     getOrCreateSystemConfig(),
@@ -150,8 +150,7 @@ userRoutes.patch('/me', async (c) => {
   }
 
   const { bio, phone, uiTheme, ...userFields } = d
-  const hasUser =
-    userFields.name != null || userFields.avatarUrl !== undefined
+  const hasUser = userFields.name != null || userFields.avatarUrl !== undefined
   if (hasUser) {
     await prisma.user.update({
       where: { id: userId },
@@ -179,7 +178,9 @@ userRoutes.patch('/me', async (c) => {
   const full = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      profile: { include: { bankAccounts: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } } },
+      profile: {
+        include: { bankAccounts: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } },
+      },
     },
   })
   if (!full) return c.json({ error: 'Lỗi' }, 500)
@@ -199,7 +200,9 @@ userRoutes.patch('/me', async (c) => {
       bio: p?.bio ?? null,
       phone: p?.phone ?? null,
       uiTheme: p?.uiTheme ?? DEFAULT_UI_THEME,
-      bankAccounts: await Promise.all((p?.bankAccounts ?? []).map((b) => bankAccountToDto(b, userId))),
+      bankAccounts: await Promise.all(
+        (p?.bankAccounts ?? []).map((b) => bankAccountToDto(b, userId)),
+      ),
       createdAt: full.createdAt.toISOString(),
       idleTimeoutMinutes: sys.idleTimeoutMinutes,
     },
@@ -304,7 +307,11 @@ userRoutes.patch('/me/banks/:bankId', async (c) => {
       bankName,
       ...(d.accountNumber != null ? { accountNumber: d.accountNumber.trim() } : {}),
       ...(d.accountName != null ? { accountName: d.accountName.trim() } : {}),
-      ...(d.isDefault === true ? { isDefault: true } : d.isDefault === false ? { isDefault: false } : {}),
+      ...(d.isDefault === true
+        ? { isDefault: true }
+        : d.isDefault === false
+          ? { isDefault: false }
+          : {}),
       ...(d.qrImageUrl !== undefined ? { qrImageUrl: d.qrImageUrl } : {}),
     },
   })

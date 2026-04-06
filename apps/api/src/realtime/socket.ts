@@ -1,7 +1,7 @@
-import { prisma } from '@expense/database'
-import { verifyAccessToken } from '../lib/jwt.js'
 import type { Server as HttpServer } from 'node:http'
+import { prisma } from '@expense/database'
 import { Server } from 'socket.io'
+import { verifyAccessToken } from '../lib/jwt.js'
 
 let io: Server | null = null
 
@@ -58,6 +58,10 @@ export function attachSocketServer(httpServer: HttpServer): Server {
     void socket.join(`user:${uid}`)
   })
 
+  return io
+}
+
+export function getIo(): Server | null {
   return io
 }
 

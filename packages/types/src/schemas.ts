@@ -54,7 +54,17 @@ export const updateGroupSchema = z.object({
   icon: z.string().max(120).optional().nullable(),
   color: z.string().max(32).optional().nullable(),
   requireApproval: z.boolean().optional(),
+  debtReminderEnabled: z.boolean().optional(),
+  debtReminderDays: z.number().int().min(1).max(365).optional(),
 })
+
+export const createCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+  icon: z.string().max(120).optional().nullable(),
+  color: z.string().max(32).optional().nullable(),
+})
+
+export const updateCategorySchema = createCategorySchema.partial()
 
 export const updateGroupFundSchema = z.object({
   lowThreshold: z.number().nonnegative(),
@@ -110,13 +120,10 @@ const categoryIdForCreate = z.preprocess(
 )
 
 /** PATCH: '' hoặc null → gỡ danh mục; bỏ field → không đổi. */
-const categoryIdForUpdate = z.preprocess(
-  (val) => {
-    if (val === '') return null
-    return val
-  },
-  z.union([z.string().cuid(), z.null()]).optional(),
-)
+const categoryIdForUpdate = z.preprocess((val) => {
+  if (val === '') return null
+  return val
+}, z.union([z.string().cuid(), z.null()]).optional())
 
 export const createExpenseSchema = z.object({
   title: z.string().min(1).max(200),
@@ -227,6 +234,16 @@ export const expenseFilterSchema = paginationSchema.extend({
   categoryId: z.string().cuid().optional(),
   paidByUserId: z.string().cuid().optional(),
   status: z.enum(['ACTIVE', 'SETTLED', 'STANDALONE_DONE']).optional(),
+  /**
+   * Admin browse: xem cả bản ghi đã xoá mềm.
+   * Member thường: tham số bị bỏ qua ở API.
+   */
+  includeDeleted: z.preprocess((val) => {
+    if (val === undefined || val === null || val === '') return undefined
+    if (val === true || val === 'true' || val === '1') return true
+    if (val === false || val === 'false' || val === '0') return false
+    return undefined
+  }, z.boolean().optional()),
   /** Query: client có thể gửi boolean hoặc chuỗi */
   isStandalone: z.preprocess((val) => {
     if (val === undefined || val === null || val === '') return undefined

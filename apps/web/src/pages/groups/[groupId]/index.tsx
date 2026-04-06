@@ -10,7 +10,7 @@ import { Icon } from '@iconify/react'
 import { Col, Row, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useRouter } from 'next/router'
-import { useMemo, type ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 
 type OverviewStat = {
   label: string
@@ -52,12 +52,15 @@ export default function GroupHomePage() {
   const members = memberList?.members ?? []
   const { data: settlements = [] } = useSettlements(groupId)
 
-  const thisMonthFilters = useMemo(() => ({
-    dateFrom: dayjs().startOf('month').toISOString(),
-    dateTo: dayjs().endOf('month').toISOString(),
-    page: 1,
-    limit: 100,
-  }), [])
+  const thisMonthFilters = useMemo(
+    () => ({
+      dateFrom: dayjs().startOf('month').toISOString(),
+      dateTo: dayjs().endOf('month').toISOString(),
+      page: 1,
+      limit: 100,
+    }),
+    [],
+  )
 
   const { data: thisMonthData } = useExpenses(groupId, thisMonthFilters)
   const { data: standalonePendingData } = useExpenses(groupId, standalonePendingFilters)
@@ -67,7 +70,9 @@ export default function GroupHomePage() {
 
   if (!groupId) return null
 
-  const pendingSettlements = settlements.filter((s) => s.status === 'PENDING' || s.status === 'DRAFT')
+  const pendingSettlements = settlements.filter(
+    (s) => s.status === 'PENDING' || s.status === 'DRAFT',
+  )
   const completedSettlements = settlements.filter((s) => s.status === 'COMPLETED')
   const thisMonthTotal = thisMonthData?.data.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0
   const thisMonthCount = thisMonthData?.total ?? 0
@@ -94,7 +99,9 @@ export default function GroupHomePage() {
                 <GroupNavIcon group={group} size={24} />
               </div>
               <div className="min-w-0 flex-1">
-                <Typography.Title level={4} className="!mb-1 !mt-0">{group.name}</Typography.Title>
+                <Typography.Title level={4} className="!mb-1 !mt-0">
+                  {group.name}
+                </Typography.Title>
                 <Typography.Paragraph type="secondary" className="!mb-2 !mt-0 text-sm">
                   {group.description?.trim() ? group.description : 'Chưa có mô tả.'}
                 </Typography.Paragraph>
@@ -130,7 +137,12 @@ export default function GroupHomePage() {
                 },
                 {
                   label: 'Quỹ nhóm',
-                  value: group.fundBalance != null ? <CurrencyDisplay amount={group.fundBalance} /> : '—',
+                  value:
+                    group.fundBalance != null ? (
+                      <CurrencyDisplay amount={group.fundBalance} />
+                    ) : (
+                      '—'
+                    ),
                   sub: 'Số dư hiện tại',
                   icon: 'mdi:bank-outline',
                   color: '#00A32A',
@@ -176,7 +188,10 @@ export default function GroupHomePage() {
             ).map((s: OverviewStat) => (
               <Col xs={24} sm={12} lg={8} key={s.label}>
                 <div className="flex items-center gap-4 rounded-xl border border-stone-300 bg-white px-5 py-4 shadow-sm">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ background: s.bg }}>
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                    style={{ background: s.bg }}
+                  >
                     <Icon icon={s.icon} width={24} color={s.color} />
                   </div>
                   <div className="min-w-0 flex-1">

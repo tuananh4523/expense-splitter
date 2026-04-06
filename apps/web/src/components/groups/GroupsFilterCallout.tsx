@@ -65,12 +65,19 @@ export function GroupsFilterCallout({
             <Typography.Title level={5} className="!mb-1 !mt-0 text-stone-900">
               {title}
             </Typography.Title>
-            <Typography.Paragraph type="secondary" className="!mb-0 max-w-2xl text-sm leading-relaxed">
+            <Typography.Paragraph
+              type="secondary"
+              className="!mb-0 max-w-2xl text-sm leading-relaxed"
+            >
               {description}
             </Typography.Paragraph>
           </div>
         </div>
-        <Button type="default" className="shrink-0 border-stone-300 bg-white font-semibold shadow-sm" onClick={onClear}>
+        <Button
+          type="default"
+          className="shrink-0 border-stone-300 bg-white font-semibold shadow-sm"
+          onClick={onClear}
+        >
           Xem tất cả nhóm
         </Button>
       </div>

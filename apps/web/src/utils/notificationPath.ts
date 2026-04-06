@@ -10,6 +10,9 @@ export function getNotificationTargetPath(item: NotificationDto): string | undef
   if (item.type === 'GROUP_INVITE' && groupId) {
     return `/join?group=${encodeURIComponent(groupId)}`
   }
+  if ((item.type === 'EXPENSE_DELETED' || item.type === 'EXPENSE_RESTORED') && groupId) {
+    return `/groups/${groupId}/expenses`
+  }
   if (groupId && settlementId) {
     return `/groups/${groupId}/settlement/${settlementId}`
   }

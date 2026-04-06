@@ -2,9 +2,9 @@ import AppLayout from '@/components/layout/AppLayout'
 import { api } from '@/lib/api'
 import { fmtDate } from '@/utils/date'
 import { withAdmin } from '@/utils/withAdmin'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Col, Form, Image, Input, Rate, Row, Select, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const getServerSideProps = withAdmin()
 
@@ -141,11 +141,7 @@ export default function AdminFeedbackPage() {
         dataIndex: 'type',
         width: 112,
         render: (t: string) =>
-          t === 'PRAISE' ? (
-            <Tag color="green">Đánh giá</Tag>
-          ) : (
-            <Tag color="volcano">Vấn đề</Tag>
-          ),
+          t === 'PRAISE' ? <Tag color="green">Đánh giá</Tag> : <Tag color="volcano">Vấn đề</Tag>,
       },
       {
         title: 'Sao',

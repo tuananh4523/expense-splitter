@@ -2,9 +2,9 @@ import AppLayout from '@/components/layout/AppLayout'
 import { api } from '@/lib/api'
 import { fmtDate } from '@/utils/date'
 import { withAdmin } from '@/utils/withAdmin'
+import { useQuery } from '@tanstack/react-query'
 import { Table, Typography } from 'antd'
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 
 export const getServerSideProps = withAdmin()
 

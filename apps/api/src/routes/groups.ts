@@ -1,4 +1,5 @@
 import { prisma } from '@expense/database'
+import { Prisma } from '@expense/database'
 import {
   contributeFundSchema,
   createGroupSchema,
@@ -17,10 +18,10 @@ import type {
   MemberDto,
   PendingGroupInviteDto,
 } from '@expense/types'
-import { Prisma } from '@expense/database'
 import type { Context } from 'hono'
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { memberUnsettledFinancials, unsettledSharedNetBalance } from '../lib/dashboard-summary.js'
 import { formatVndForSummary } from '../lib/format-vnd.js'
 import { actorSnapshot, writeGroupActivityLog } from '../lib/group-activity-log.js'
 import {
@@ -28,7 +29,6 @@ import {
   resolveGroupReadAccess,
   resolveGroupWriteAccess,
 } from '../lib/group-gate.js'
-import { memberUnsettledFinancials, unsettledSharedNetBalance } from '../lib/dashboard-summary.js'
 import { signedStorageUrlForUser } from '../lib/minio.js'
 import { requireAuth } from '../middleware/auth.js'
 import { groupExpenseRoutes } from './expenses.js'
@@ -159,6 +159,8 @@ async function toGroupDto(
     inviteExpires: Date | null
     isActive: boolean
     requireApproval: boolean
+    debtReminderEnabled: boolean
+    debtReminderDays: number
     createdAt: Date
   },
   myRole: string,
@@ -179,6 +181,8 @@ async function toGroupDto(
     inviteExpires: group.inviteExpires?.toISOString() ?? null,
     isActive: group.isActive,
     requireApproval: group.requireApproval,
+    debtReminderEnabled: group.debtReminderEnabled,
+    debtReminderDays: group.debtReminderDays,
     memberCount,
     myRole,
     fundBalance,
@@ -245,7 +249,9 @@ groupRoutes.post('/join', async (c) => {
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400)
   }
-  const parsed = inviteMemberSchema.safeParse({ inviteCode: (body as { inviteCode?: string }).inviteCode })
+  const parsed = inviteMemberSchema.safeParse({
+    inviteCode: (body as { inviteCode?: string }).inviteCode,
+  })
   if (!parsed.success || !parsed.data.inviteCode) {
     return c.json({ error: 'Cần mã mời' }, 400)
   }
@@ -387,12 +393,126 @@ groupRoutes.post('/', async (c) => {
 groupRoutes.route('/:groupId/expenses', groupExpenseRoutes)
 groupRoutes.route('/:groupId/settlements', groupSettlementRoutes)
 
+// ── CUSTOM CATEGORIES ─────────────────────────────
+import { createCategorySchema, updateCategorySchema } from '@expense/types'
+
+groupRoutes.post('/:groupId/categories', async (c) => {
+  const groupId = c.req.param('groupId')
+  const userId = c.get('userId')
+  
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Chỉ trưởng nhóm hoặc phó nhóm có thể thêm danh mục' }, 403)
+  }
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400)
+  }
+
+  const parsed = createCategorySchema.safeParse(body)
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' }, 400)
+  }
+
+  const existing = await prisma.category.findFirst({
+    where: { groupId, name: parsed.data.name }
+  })
+  if (existing) {
+    return c.json({ error: 'Danh mục này đã tồn tại trong nhóm' }, 409)
+  }
+
+  const cat = await prisma.category.create({
+    data: {
+      groupId,
+      name: parsed.data.name,
+      icon: parsed.data.icon ?? null,
+      color: parsed.data.color ?? null,
+      isSystem: false,
+    }
+  })
+
+  return c.json({ data: cat })
+})
+
+groupRoutes.put('/:groupId/categories/:categoryId', async (c) => {
+  const groupId = c.req.param('groupId')
+  const categoryId = c.req.param('categoryId')
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Không có quyền' }, 403)
+  }
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400)
+  }
+  const parsed = updateCategorySchema.safeParse(body)
+  if (!parsed.success) {
+    return c.json({ error: 'Dữ liệu không hợp lệ' }, 400)
+  }
+
+  const target = await prisma.category.findFirst({
+    where: { id: categoryId, groupId }
+  })
+  if (!target) return c.json({ error: 'Không tìm thấy danh mục' }, 404)
+
+  if (parsed.data.name && parsed.data.name !== target.name) {
+    const existing = await prisma.category.findFirst({
+      where: { groupId, name: parsed.data.name, NOT: { id: categoryId } }
+    })
+    if (existing) return c.json({ error: 'Tên danh mục đã tồn tại' }, 409)
+  }
+
+  const cat = await prisma.category.update({
+    where: { id: categoryId },
+    data: {
+      ...(parsed.data.name ? { name: parsed.data.name } : {}),
+      ...(parsed.data.icon !== undefined ? { icon: parsed.data.icon } : {}),
+      ...(parsed.data.color !== undefined ? { color: parsed.data.color } : {})
+    }
+  })
+
+  return c.json({ data: cat })
+})
+
+groupRoutes.delete('/:groupId/categories/:categoryId', async (c) => {
+  const groupId = c.req.param('groupId')
+  const categoryId = c.req.param('categoryId')
+  
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Không có quyền' }, 403)
+  }
+
+  const target = await prisma.category.findFirst({
+    where: { id: categoryId, groupId },
+    include: { _count: { select: { expenses: true } } }
+  })
+  if (!target) return c.json({ error: 'Không tìm thấy danh mục' }, 404)
+  if (target._count.expenses > 0) {
+    return c.json({ error: 'Không thể xoá danh mục đã có khoản chi' }, 400)
+  }
+
+  await prisma.category.delete({ where: { id: categoryId } })
+  return c.json({ data: { ok: true } })
+})
+
 groupRoutes.get('/:groupId/activity-logs', async (c) => {
   const groupId = c.req.param('groupId')
   const access = await resolveGroupReadAccess(c, groupId)
   if (!access.ok) return access.response
 
-  const parsed = groupActivityLogFilterSchema.safeParse(Object.fromEntries(new URL(c.req.url).searchParams))
+  const parsed = groupActivityLogFilterSchema.safeParse(
+    Object.fromEntries(new URL(c.req.url).searchParams),
+  )
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues[0]?.message ?? 'Query không hợp lệ' }, 400)
   }
@@ -650,21 +770,23 @@ groupRoutes.get('/:groupId/join-requests', async (c) => {
   const requests = await prisma.groupJoinRequest.findMany({
     where: { groupId, status: 'PENDING' },
     include: {
-      user: { select: { id: true, name: true, email: true, avatarUrl: true } }
+      user: { select: { id: true, name: true, email: true, avatarUrl: true } },
     },
-    orderBy: { createdAt: 'asc' }
+    orderBy: { createdAt: 'asc' },
   })
-  const dtos = await Promise.all(requests.map(async req => ({
-    id: req.id,
-    groupId: req.groupId,
-    userId: req.userId,
-    status: req.status,
-    createdAt: req.createdAt.toISOString(),
-    user: {
-      ...req.user,
-      avatarUrl: await signedStorageUrlForUser(req.user.avatarUrl, userId)
-    }
-  })))
+  const dtos = await Promise.all(
+    requests.map(async (req) => ({
+      id: req.id,
+      groupId: req.groupId,
+      userId: req.userId,
+      status: req.status,
+      createdAt: req.createdAt.toISOString(),
+      user: {
+        ...req.user,
+        avatarUrl: await signedStorageUrlForUser(req.user.avatarUrl, userId),
+      },
+    })),
+  )
   return c.json({ data: dtos })
 })
 
@@ -679,10 +801,10 @@ groupRoutes.post('/:groupId/join-requests/:requestId/approve', async (c) => {
   }
   const req = await prisma.groupJoinRequest.findFirst({
     where: { id: requestId, groupId, status: 'PENDING' },
-    include: { user: { select: { id: true, name: true, email: true } } }
+    include: { user: { select: { id: true, name: true, email: true } } },
   })
   if (!req) return c.json({ error: 'Không tìm thấy yêu cầu' }, 404)
-  
+
   await prisma.$transaction(async (tx) => {
     const existing = await tx.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId: req.userId } },
@@ -727,10 +849,10 @@ groupRoutes.post('/:groupId/join-requests/:requestId/reject', async (c) => {
   }
   const req = await prisma.groupJoinRequest.findFirst({
     where: { id: requestId, groupId, status: 'PENDING' },
-    include: { user: { select: { id: true, name: true, email: true } } }
+    include: { user: { select: { id: true, name: true, email: true } } },
   })
   if (!req) return c.json({ error: 'Không tìm thấy yêu cầu' }, 404)
-  
+
   await prisma.groupJoinRequest.update({
     where: { id: requestId },
     data: { status: 'REJECTED' },
@@ -771,7 +893,9 @@ groupRoutes.get('/:groupId/members', async (c) => {
       dto.netBalance = (netIouByUser.get(m.userId) ?? new Prisma.Decimal(0)).toFixed(2)
       dto.sharedPaidTotal = (paidSharedByUser.get(m.userId) ?? new Prisma.Decimal(0)).toFixed(2)
       dto.sharedOwedTotal = (owedSharedByUser.get(m.userId) ?? new Prisma.Decimal(0)).toFixed(2)
-      dto.fundContributedApproved = (fundContributedByUser.get(m.userId) ?? new Prisma.Decimal(0)).toFixed(2)
+      dto.fundContributedApproved = (
+        fundContributedByUser.get(m.userId) ?? new Prisma.Decimal(0)
+      ).toFixed(2)
       return dto
     }),
   )
@@ -847,7 +971,10 @@ groupRoutes.post('/:groupId/members', async (c) => {
       return c.json({ error: 'Đã có lời mời chờ người này xác nhận' }, 409)
     }
 
-    const groupMeta = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } })
+    const groupMeta = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true },
+    })
     const inviterRow = await prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true },
@@ -910,8 +1037,10 @@ groupRoutes.post('/:groupId/members', async (c) => {
         where: { groupId_userId: { groupId: targetGroup.id, userId } },
       })
       if (existingReq) {
-        if (existingReq.status === 'PENDING') return c.json({ error: 'Đã gửi yêu cầu tham gia, chờ duyệt' }, 409)
-        if (existingReq.status === 'REJECTED') return c.json({ error: 'Yêu cầu tham gia bị từ chối' }, 403)
+        if (existingReq.status === 'PENDING')
+          return c.json({ error: 'Đã gửi yêu cầu tham gia, chờ duyệt' }, 409)
+        if (existingReq.status === 'REJECTED')
+          return c.json({ error: 'Yêu cầu tham gia bị từ chối' }, 403)
       }
       await prisma.groupJoinRequest.upsert({
         where: { groupId_userId: { groupId: targetGroup.id, userId } },
@@ -1184,7 +1313,9 @@ groupRoutes.post('/:groupId/fund/contribute', async (c) => {
       select: { userId: true },
     }),
   ])
-  const reviewerIds = [...new Set(reviewerMembers.map((m) => m.userId))].filter((id) => id !== userId)
+  const reviewerIds = [...new Set(reviewerMembers.map((m) => m.userId))].filter(
+    (id) => id !== userId,
+  )
   if (reviewerIds.length > 0) {
     const groupLabel = groupMeta?.name ?? 'Nhóm'
     const amountLabel = formatVndForSummary(amount)
@@ -1464,7 +1595,15 @@ groupRoutes.patch('/:groupId', async (c) => {
       ...(parsed.data.avatarUrl !== undefined ? { avatarUrl: parsed.data.avatarUrl } : {}),
       ...(parsed.data.icon !== undefined ? { icon: parsed.data.icon?.trim() ?? null } : {}),
       ...(parsed.data.color !== undefined ? { color: parsed.data.color?.trim() ?? null } : {}),
-      ...(parsed.data.requireApproval !== undefined ? { requireApproval: parsed.data.requireApproval } : {}),
+      ...(parsed.data.requireApproval !== undefined
+        ? { requireApproval: parsed.data.requireApproval }
+        : {}),
+      ...(parsed.data.debtReminderEnabled !== undefined
+        ? { debtReminderEnabled: parsed.data.debtReminderEnabled }
+        : {}),
+      ...(parsed.data.debtReminderDays !== undefined
+        ? { debtReminderDays: parsed.data.debtReminderDays }
+        : {}),
     },
     include: {
       fund: true,

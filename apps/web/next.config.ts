@@ -10,10 +10,7 @@ function minioImageRemotePattern(): { protocol: 'http' | 'https'; hostname: stri
     try {
       const u = new URL(raw)
       const protocol = u.protocol === 'https:' ? 'https' : 'http'
-      const port =
-        u.port ||
-        process.env.MINIO_PORT ||
-        (protocol === 'https' ? '443' : '9000')
+      const port = u.port || process.env.MINIO_PORT || (protocol === 'https' ? '443' : '9000')
       return { protocol, hostname: u.hostname, port: String(port) }
     } catch {
       /* fallthrough */

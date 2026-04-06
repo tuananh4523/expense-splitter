@@ -1,13 +1,9 @@
 import { SystemBroadcastListener } from '@/components/notifications/SystemBroadcastListener'
+import { profileKeys, useMe } from '@/hooks/useProfile'
 import { api } from '@/lib/api'
-import {
-  applyUiThemeToDocument,
-  readStoredUiTheme,
-  writeStoredUiTheme,
-} from '@/lib/uiThemeStorage'
+import { applyUiThemeToDocument, readStoredUiTheme, writeStoredUiTheme } from '@/lib/uiThemeStorage'
 import { antThemeBase } from '@/theme/antThemeBase'
 import { uiThemeAntMap } from '@/theme/uiThemeAntMap'
-import { profileKeys, useMe } from '@/hooks/useProfile'
 import { DEFAULT_UI_THEME, type UiThemeId } from '@expense/types'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ThemeConfig } from 'antd'
@@ -15,13 +11,13 @@ import { App as AntdApp, ConfigProvider } from 'antd'
 import viVN from 'antd/locale/vi_VN'
 import { useSession } from 'next-auth/react'
 import {
+  type ReactNode,
   createContext,
   useCallback,
   useContext,
   useLayoutEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from 'react'
 
 function buildAntTheme(themeId: UiThemeId): ThemeConfig {

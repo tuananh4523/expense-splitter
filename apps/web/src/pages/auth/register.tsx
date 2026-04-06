@@ -1,3 +1,8 @@
+import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
+import { APP_AUTHOR, APP_AUTHOR_GITHUB_URL, APP_AUTHOR_LINKEDIN_URL, APP_NAME } from '@/config/app'
+import { SITE_DESCRIPTION, pageTitle } from '@/config/site'
+import { getBrowserApiBaseUrl } from '@/lib/apiBaseUrl'
+import { withGuest } from '@/utils/withAuth'
 import { registerSchema } from '@expense/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Icon } from '@iconify/react'
@@ -10,16 +15,6 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
-import {
-  APP_AUTHOR,
-  APP_AUTHOR_GITHUB_URL,
-  APP_AUTHOR_LINKEDIN_URL,
-  APP_NAME,
-} from '@/config/app'
-import { pageTitle, SITE_DESCRIPTION } from '@/config/site'
-import { getBrowserApiBaseUrl } from '@/lib/apiBaseUrl'
-import { withGuest } from '@/utils/withAuth'
 
 export const getServerSideProps = withGuest
 
@@ -70,9 +65,10 @@ export default function RegisterPage() {
       void router.push('/dashboard')
     } catch (e) {
       if (isAxiosError(e)) {
-        const msg = e.response?.data && typeof e.response.data === 'object' && 'error' in e.response.data
-          ? String((e.response.data as { error: unknown }).error)
-          : e.message
+        const msg =
+          e.response?.data && typeof e.response.data === 'object' && 'error' in e.response.data
+            ? String((e.response.data as { error: unknown }).error)
+            : e.message
         setError(msg || 'Đăng ký thất bại')
       } else {
         setError('Đăng ký thất bại')
@@ -171,7 +167,9 @@ export default function RegisterPage() {
                     id="reg-password"
                     size="large"
                     placeholder="Tối thiểu 6 ký tự"
-                    prefix={<Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />}
+                    prefix={
+                      <Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />
+                    }
                     status={formState.errors.password ? 'error' : ''}
                     autoComplete="new-password"
                   />
@@ -195,7 +193,9 @@ export default function RegisterPage() {
                     id="reg-confirm"
                     size="large"
                     placeholder="••••••••"
-                    prefix={<Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />}
+                    prefix={
+                      <Icon icon="fluent:lock-closed-20-regular" color={iconMuted} width={18} />
+                    }
                     status={formState.errors.confirmPassword ? 'error' : ''}
                     autoComplete="new-password"
                   />

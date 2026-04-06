@@ -65,7 +65,11 @@ export function InviteModal({
       user: u,
       label: (
         <div className="flex items-center gap-2 py-0.5">
-          <Avatar src={u.avatarUrl ?? undefined} size={36} className="shrink-0 !bg-brand-soft !text-brand-text">
+          <Avatar
+            src={u.avatarUrl ?? undefined}
+            size={36}
+            className="shrink-0 !bg-brand-soft !text-brand-text"
+          >
             {u.name[0]?.toUpperCase()}
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -160,8 +164,9 @@ export function InviteModal({
   return (
     <Modal open={open} onCancel={onClose} title="Mời thành viên" footer={null} destroyOnClose>
       <Typography.Paragraph type="secondary" className="!mb-3 !text-sm">
-        Gõ email hoặc tên, nhấn <strong>Enter</strong> để tìm trong hệ thống. Chọn người trong gợi ý hoặc nếu chỉ có một
-        kết quả sẽ thêm vào danh sách bên dưới. Để tham gia bằng mã mời, dùng «Tham gia nhóm» hoặc link mời.
+        Gõ email hoặc tên, nhấn <strong>Enter</strong> để tìm trong hệ thống. Chọn người trong gợi ý
+        hoặc nếu chỉ có một kết quả sẽ thêm vào danh sách bên dưới. Để tham gia bằng mã mời, dùng
+        «Tham gia nhóm» hoặc link mời.
       </Typography.Paragraph>
 
       <AutoComplete
@@ -203,7 +208,11 @@ export function InviteModal({
                 key={u.id}
                 className="flex items-center gap-3 rounded-md border border-stone-100 bg-white px-2 py-2 shadow-sm"
               >
-                <Avatar src={u.avatarUrl ?? undefined} size={40} className="shrink-0 !bg-brand-soft !text-brand-text">
+                <Avatar
+                  src={u.avatarUrl ?? undefined}
+                  size={40}
+                  className="shrink-0 !bg-brand-soft !text-brand-text"
+                >
                   {u.name[0]?.toUpperCase()}
                 </Avatar>
                 <div className="min-w-0 flex-1">

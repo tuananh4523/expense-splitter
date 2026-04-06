@@ -4,9 +4,9 @@ import { api } from '@/lib/api'
 import { fmtDateTime } from '@/utils/date'
 import { withAdmin } from '@/utils/withAdmin'
 import { Icon } from '@iconify/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Card, Form, InputNumber, Popconfirm, Spin } from 'antd'
 import { useEffect } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const getServerSideProps = withAdmin()
 
@@ -33,8 +33,7 @@ export default function AdminSettingsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'settings'],
-    queryFn: () =>
-      api.get<{ data: SettingsDto }>('/admin/settings').then((r) => r.data.data),
+    queryFn: () => api.get<{ data: SettingsDto }>('/admin/settings').then((r) => r.data.data),
   })
 
   useEffect(() => {
@@ -45,7 +44,9 @@ export default function AdminSettingsPage() {
 
   const cleanupStorage = useMutation({
     mutationFn: () =>
-      api.post<{ data: OrphanCleanupDto }>('/admin/storage/cleanup-orphans').then((r) => r.data.data),
+      api
+        .post<{ data: OrphanCleanupDto }>('/admin/storage/cleanup-orphans')
+        .then((r) => r.data.data),
     onSuccess: (d) => {
       message.success(
         `Đã quét ${d.scanned} file, xóa ${d.deleted} file mồ côi (tham chiếu DB: ${d.referenced}).` +
@@ -86,17 +87,20 @@ export default function AdminSettingsPage() {
                   <Icon icon="mdi:cloud-sync-outline" width={22} height={22} />
                 </div>
                 <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-                  <h2 className="text-lg font-semibold tracking-tight text-wp-charcoal">Lưu trữ (MinIO)</h2>
+                  <h2 className="text-lg font-semibold tracking-tight text-wp-charcoal">
+                    Lưu trữ (MinIO)
+                  </h2>
                   <p className="mt-1 text-sm leading-relaxed text-wp-slate">
-                    Gỡ các file ảnh trong kho không còn được hệ thống trỏ tới — ví dụ ảnh đại diện cũ sau khi đổi,
-                    ảnh đính kèm đã gỡ khỏi chi tiêu.
+                    Gỡ các file ảnh trong kho không còn được hệ thống trỏ tới — ví dụ ảnh đại diện
+                    cũ sau khi đổi, ảnh đính kèm đã gỡ khỏi chi tiêu.
                   </p>
                   <div className="mt-3 rounded-lg border border-[--color-border-light] bg-page px-3 py-2 text-sm leading-relaxed text-wp-slate">
                     Chỉ quét và xóa trong thư mục an toàn:{' '}
                     <span className="font-medium text-wp-charcoal">avatars</span>,{' '}
                     <span className="font-medium text-wp-charcoal">groups</span>,{' '}
                     <span className="font-medium text-wp-charcoal">feedback</span>,{' '}
-                    <span className="font-medium text-wp-charcoal">bank-qr</span>. Không xóa dữ liệu trong PostgreSQL.
+                    <span className="font-medium text-wp-charcoal">bank-qr</span>. Không xóa dữ liệu
+                    trong PostgreSQL.
                   </div>
                   <div className="mt-auto border-t border-[--color-border-light] pt-4">
                     <Popconfirm
@@ -126,10 +130,13 @@ export default function AdminSettingsPage() {
                   <Icon icon="mdi:timer-sand-complete" width={22} height={22} />
                 </div>
                 <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-                  <h2 className="text-lg font-semibold tracking-tight text-wp-charcoal">Phiên đăng nhập</h2>
+                  <h2 className="text-lg font-semibold tracking-tight text-wp-charcoal">
+                    Phiên đăng nhập
+                  </h2>
                   <p className="mt-1 text-sm leading-relaxed text-wp-slate">
-                    Nếu người dùng không thao tác (chuột, phím, cuộn…) trong khoảng thời gian này, hệ thống sẽ tự
-                    đăng xuất. Giá trị <strong className="font-semibold text-wp-charcoal">0</strong> là tắt tính năng.
+                    Nếu người dùng không thao tác (chuột, phím, cuộn…) trong khoảng thời gian này,
+                    hệ thống sẽ tự đăng xuất. Giá trị{' '}
+                    <strong className="font-semibold text-wp-charcoal">0</strong> là tắt tính năng.
                   </p>
 
                   <Form
@@ -146,7 +153,12 @@ export default function AdminSettingsPage() {
                         label="Thời gian chờ không hoạt động (phút)"
                         rules={[
                           { required: true, message: 'Nhập số phút' },
-                          { type: 'number', min: 0, max: 10080, message: 'Từ 0 đến 10080 (7 ngày)' },
+                          {
+                            type: 'number',
+                            min: 0,
+                            max: 10080,
+                            message: 'Từ 0 đến 10080 (7 ngày)',
+                          },
                         ]}
                         extra="Ví dụ: 30 = nửa giờ; 120 = 2 giờ. Tối đa 10080 phút (7 ngày)."
                       >
@@ -161,12 +173,19 @@ export default function AdminSettingsPage() {
                       {data?.updatedAt ? (
                         <p className="text-sm text-[var(--color-text-muted)]">
                           Cập nhật lần cuối:{' '}
-                          <span className="tabular-nums text-wp-slate">{fmtDateTime(data.updatedAt)}</span>
+                          <span className="tabular-nums text-wp-slate">
+                            {fmtDateTime(data.updatedAt)}
+                          </span>
                         </p>
                       ) : null}
                     </div>
                     <div className="mt-auto border-t border-[--color-border-light] pt-4">
-                      <Button type="primary" htmlType="submit" loading={patch.isPending} size="small">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={patch.isPending}
+                        size="small"
+                      >
                         Lưu
                       </Button>
                     </div>

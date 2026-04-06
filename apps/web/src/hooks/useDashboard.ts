@@ -44,4 +44,3 @@ export const useDashboardCharts = (startDate?: Date, endDate?: Date) =>
         })
         .then((r) => r.data.data),
   })
-

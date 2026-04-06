@@ -2,11 +2,11 @@ import AppLayout from '@/components/layout/AppLayout'
 import { type SessionRow, useRevokeSession, useSessions } from '@/hooks/useSessions'
 import { fmtDateTime } from '@/utils/date'
 import { withAuth } from '@/utils/withAuth'
-import { App, Button, Popconfirm, Table, Tag, Typography } from 'antd'
-import { useSession } from 'next-auth/react'
-import type { ColumnsType } from 'antd/es/table'
-import type { MessageInstance } from 'antd/es/message/interface'
 import type { UseMutationResult } from '@tanstack/react-query'
+import { App, Button, Popconfirm, Table, Tag, Typography } from 'antd'
+import type { MessageInstance } from 'antd/es/message/interface'
+import type { ColumnsType } from 'antd/es/table'
+import { useSession } from 'next-auth/react'
 
 export const getServerSideProps = withAuth()
 
@@ -17,12 +17,7 @@ function RevokeSessionButton({
   variant,
 }: {
   row: SessionRow
-  revoke: UseMutationResult<
-    { ok: boolean; wasCurrent: boolean },
-    Error,
-    string,
-    unknown
-  >
+  revoke: UseMutationResult<{ ok: boolean; wasCurrent: boolean }, Error, string, unknown>
   message: MessageInstance
   variant: 'table' | 'mobile'
 }) {
@@ -73,7 +68,11 @@ export default function ProfileSessionsPage() {
         <div>
           <div className="font-medium text-stone-900">{r.deviceLabel ?? 'Không xác định'}</div>
           {r.userAgent ? (
-            <Typography.Text type="secondary" className="text-xs" ellipsis={{ tooltip: r.userAgent }}>
+            <Typography.Text
+              type="secondary"
+              className="text-xs"
+              ellipsis={{ tooltip: r.userAgent }}
+            >
               {r.userAgent}
             </Typography.Text>
           ) : null}
@@ -116,8 +115,9 @@ export default function ProfileSessionsPage() {
         type="secondary"
         className="mb-4 max-w-2xl text-pretty text-sm leading-relaxed md:text-base"
       >
-        Mỗi lần đăng nhập tạo một phiên và lưu địa chỉ IP cùng chuỗi User-Agent (trình duyệt / thiết bị) lúc đó.
-        Bạn có thể đăng xuất từ xa các phiên khác. Đổi mật khẩu sẽ đăng xuất mọi phiên trừ phiên hiện tại.
+        Mỗi lần đăng nhập tạo một phiên và lưu địa chỉ IP cùng chuỗi User-Agent (trình duyệt / thiết
+        bị) lúc đó. Bạn có thể đăng xuất từ xa các phiên khác. Đổi mật khẩu sẽ đăng xuất mọi phiên
+        trừ phiên hiện tại.
       </Typography.Paragraph>
 
       {/* Dùng breakpoint CSS (md = 768px) thay vì useBreakpoint — tránh nhầm layout lúc render đầu */}

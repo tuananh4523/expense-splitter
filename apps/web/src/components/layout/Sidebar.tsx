@@ -1,8 +1,8 @@
 import { GroupNavIcon } from '@/components/groups/GroupNavIcon'
 import { useGroup, useGroups } from '@/hooks/useGroup'
 import { useMe } from '@/hooks/useProfile'
-import { Icon } from '@iconify/react'
 import type { GroupDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 import type { MenuProps } from 'antd'
 import { ConfigProvider, Menu } from 'antd'
 import { useSession } from 'next-auth/react'
@@ -92,7 +92,9 @@ export function SidebarNav({
     return id
   }, [path])
   const inMemberList = Boolean(pathGroupId && groups.some((g) => g.id === pathGroupId))
-  const { data: pathOnlyGroup } = useGroup(pathGroupId, { enabled: Boolean(pathGroupId) && !inMemberList })
+  const { data: pathOnlyGroup } = useGroup(pathGroupId, {
+    enabled: Boolean(pathGroupId) && !inMemberList,
+  })
   const menuGroups = useMemo(() => {
     if (!pathGroupId || !pathOnlyGroup) return groups
     if (groups.some((g) => g.id === pathGroupId)) return groups
@@ -272,7 +274,11 @@ export function SidebarNav({
   )
 }
 
-export function SidebarMenu(props: { groupId?: string; onNavigate?: () => void; showFooter?: boolean }) {
+export function SidebarMenu(props: {
+  groupId?: string
+  onNavigate?: () => void
+  showFooter?: boolean
+}) {
   return <SidebarNav {...(props.onNavigate != null ? { onNavigate: props.onNavigate } : {})} />
 }
 

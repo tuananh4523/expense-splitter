@@ -1,21 +1,21 @@
 import { FeedbackFab } from '@/components/feedback/FeedbackFab'
 import { GroupNavIcon } from '@/components/groups/GroupNavIcon'
+import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
 import { ChangePasswordModal } from '@/components/layout/ChangePasswordModal'
 import { NotificationBellDropdown } from '@/components/layout/NotificationBellDropdown'
-import { AppVersionBadge } from '@/components/layout/AppVersionBadge'
-import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher'
 import { SidebarNav } from '@/components/layout/Sidebar'
-import { useUnreadCount } from '@/hooks/useNotifications'
-import { useGroup } from '@/hooks/useGroup'
-import { Icon } from '@iconify/react'
-import { Alert, Avatar, Button, Drawer, Dropdown, Layout } from 'antd'
-import { useMe } from '@/hooks/useProfile'
-import { signOut, useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
+import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher'
 import { APP_NAME } from '@/config/app'
 import { pageTitle } from '@/config/site'
-import { readSidebarCollapsedFromStorage, SIDEBAR_COLLAPSED_STORAGE_KEY } from '@/lib/sidebar-pref'
+import { useGroup } from '@/hooks/useGroup'
+import { useUnreadCount } from '@/hooks/useNotifications'
+import { useMe } from '@/hooks/useProfile'
+import { SIDEBAR_COLLAPSED_STORAGE_KEY, readSidebarCollapsedFromStorage } from '@/lib/sidebar-pref'
+import { Icon } from '@iconify/react'
+import { Alert, Avatar, Button, Drawer, Dropdown, Layout } from 'antd'
+import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import { type ReactNode, useState } from 'react'
 
 const SIDEBAR_EXPANDED = 256
@@ -88,7 +88,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
   }
 
   const docTitle = pageTitle(
-    group ? (title ? `${group.name} / ${title}` : group.name) : title ?? 'Dashboard',
+    group ? (title ? `${group.name} / ${title}` : group.name) : (title ?? 'Dashboard'),
   )
 
   return (
@@ -183,7 +183,9 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                   <span className="text-stone-300">/</span>
                   {title}
                 </span>
-              ) : (title ?? 'Dashboard')}
+              ) : (
+                (title ?? 'Dashboard')
+              )}
             </h1>
           </div>
 
@@ -193,23 +195,19 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
             <NotificationBellDropdown badgeCount={unread} />
 
             <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
-              <button
-                type="button"
-                className="app-header-user"
-                aria-label="Tài khoản"
-              >
-                <Avatar
-                  size={36}
-                  src={displayImage}
-                  className="!bg-brand !font-semibold"
-                >
+              <button type="button" className="app-header-user" aria-label="Tài khoản">
+                <Avatar size={36} src={displayImage} className="!bg-brand !font-semibold">
                   {displayName?.[0]?.toUpperCase()}
                 </Avatar>
                 <span className="app-header-user-meta hidden sm:block">
                   <span className="app-header-user-name">{displayName}</span>
                   <span className="app-header-user-email">{session?.user?.email}</span>
                 </span>
-                <Icon icon="mdi:chevron-down" width={18} className="hidden text-stone-400 sm:block" />
+                <Icon
+                  icon="mdi:chevron-down"
+                  width={18}
+                  className="hidden text-stone-400 sm:block"
+                />
               </button>
             </Dropdown>
           </div>

@@ -8,8 +8,8 @@ import AppLayout from '@/components/layout/AppLayout'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useDeleteExpense } from '@/hooks/useExpenses'
 import { withAuth } from '@/utils/withAuth'
-import type { ExpenseFilterInput } from '@expense/types'
 import { PlusOutlined } from '@ant-design/icons'
+import type { ExpenseFilterInput } from '@expense/types'
 import { App, Button } from 'antd'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
@@ -67,7 +67,9 @@ export default function GroupExpensesPage() {
   return (
     <AppLayout title="Chi tiêu">
       <div className="mb-4 flex justify-end">
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setNewDrawerOpen(true)}>Thêm chi tiêu</Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setNewDrawerOpen(true)}>
+          Thêm chi tiêu
+        </Button>
       </div>
       <div className="mb-4">
         <ExpenseFilter value={filters} onChange={setFilters} />
@@ -100,7 +102,11 @@ export default function GroupExpensesPage() {
           setEditExpenseId(id)
         }}
       />
-      <NewExpenseDrawer open={newDrawerOpen} onClose={() => setNewDrawerOpen(false)} groupId={groupId} />
+      <NewExpenseDrawer
+        open={newDrawerOpen}
+        onClose={() => setNewDrawerOpen(false)}
+        groupId={groupId}
+      />
       <EditExpenseDrawer
         open={editExpenseId != null}
         expenseId={editExpenseId}

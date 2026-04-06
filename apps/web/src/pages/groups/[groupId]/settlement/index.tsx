@@ -1,8 +1,8 @@
-import AppLayout from '@/components/layout/AppLayout'
 import { MemberProfileDrawer } from '@/components/groups/MemberProfileDrawer'
+import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
-import { MemberAvatarNameButton } from '@/components/shared/MemberAvatarNameButton'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { MemberAvatarNameButton } from '@/components/shared/MemberAvatarNameButton'
 import { useGroup, useGroupMembers } from '@/hooks/useGroup'
 import {
   useDeleteSettlement,
@@ -10,13 +10,26 @@ import {
   useSettlements,
 } from '@/hooks/useSettlement'
 import { fmtDate } from '@/utils/date'
-import { withAuth } from '@/utils/withAuth'
-import { Icon } from '@iconify/react'
-import { BellOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'
-import { settlementStatusVi } from '@/utils/statusLabels'
-import type { MemberDto, SettlementDto, UserDto } from '@expense/types'
 import { isSettlementDeletable } from '@/utils/settlementDeletable'
-import { Alert, App, Button, Col, Input, Popconfirm, Row, Select, Space, Table, Tag, Tooltip } from 'antd'
+import { settlementStatusVi } from '@/utils/statusLabels'
+import { withAuth } from '@/utils/withAuth'
+import { BellOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import type { MemberDto, SettlementDto, UserDto } from '@expense/types'
+import { Icon } from '@iconify/react'
+import {
+  Alert,
+  App,
+  Button,
+  Col,
+  Input,
+  Popconfirm,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -162,7 +175,9 @@ export default function SettlementsListPage() {
         dataIndex: 'status',
         key: 'status',
         align: 'left',
-        render: (s: string) => <Tag color={statusColor[s] ?? 'default'}>{settlementStatusVi(s)}</Tag>,
+        render: (s: string) => (
+          <Tag color={statusColor[s] ?? 'default'}>{settlementStatusVi(s)}</Tag>
+        ),
       },
       {
         title: '',
@@ -194,7 +209,9 @@ export default function SettlementsListPage() {
                           d.notified > 0 ? `Đã gửi nhắc tới ${d.notified} người` : 'Đã gửi nhắc',
                         ),
                       )
-                      .catch((e) => message.error(e instanceof Error ? e.message : 'Không gửi được'))
+                      .catch((e) =>
+                        message.error(e instanceof Error ? e.message : 'Không gửi được'),
+                      )
                   }
                 >
                   <Tooltip
@@ -228,7 +245,9 @@ export default function SettlementsListPage() {
                     void deleteSettlement
                       .mutateAsync(r.id)
                       .then(() => message.success('Đã xoá đợt tổng kết'))
-                      .catch((e) => message.error(e instanceof Error ? e.message : 'Không xoá được'))
+                      .catch((e) =>
+                        message.error(e instanceof Error ? e.message : 'Không xoá được'),
+                      )
                   }
                 >
                   <Tooltip title="Xoá đợt (trưởng nhóm)">
@@ -245,7 +264,11 @@ export default function SettlementsListPage() {
               ) : null}
               <Tooltip title="Xem chi tiết">
                 <Link href={`/groups/${groupId}/settlement/${r.id}`}>
-                  <Button type="text" size="small" icon={<Icon icon="mdi:arrow-right-circle-outline" width={16} />} />
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<Icon icon="mdi:arrow-right-circle-outline" width={16} />}
+                  />
                 </Link>
               </Tooltip>
             </Space>
@@ -281,7 +304,11 @@ export default function SettlementsListPage() {
       {canCreate ? (
         <div className="mb-6 flex justify-end">
           <Space size={4} align="center">
-            <Tooltip title={settlementFundHelpTitle} placement="rightTop" overlayStyle={{ maxWidth: 320 }}>
+            <Tooltip
+              title={settlementFundHelpTitle}
+              placement="rightTop"
+              overlayStyle={{ maxWidth: 320 }}
+            >
               <Button
                 type="text"
                 className="!text-stone-400 hover:!text-stone-600"

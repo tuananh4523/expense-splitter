@@ -10,10 +10,10 @@ import {
   useStandaloneState,
 } from '@/hooks/useExpenses'
 import { useGroup } from '@/hooks/useGroup'
-import { paymentRecordStatusShort, paymentRecordStatusVi } from '@/utils/statusLabels'
 import { fmtDate } from '@/utils/date'
-import type { PaymentRecordDto } from '@expense/types'
+import { paymentRecordStatusShort, paymentRecordStatusVi } from '@/utils/statusLabels'
 import { BellOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import type { PaymentRecordDto } from '@expense/types'
 import {
   Alert,
   App,
@@ -32,7 +32,13 @@ import { useState } from 'react'
 
 function recordStatusTag(s: string) {
   const color =
-    s === 'ACCEPTED' ? 'success' : s === 'CONFIRMED' ? 'processing' : s === 'REJECTED' ? 'error' : 'default'
+    s === 'ACCEPTED'
+      ? 'success'
+      : s === 'CONFIRMED'
+        ? 'processing'
+        : s === 'REJECTED'
+          ? 'error'
+          : 'default'
   return (
     <Tooltip title={paymentRecordStatusVi(s)}>
       <Tag color={color} className="!mr-0 shrink-0">
@@ -93,7 +99,14 @@ export function StandalonePaymentModal({
   }
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} width={640} title="Chi tiêu riêng" destroyOnClose>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      width={640}
+      title="Chi tiêu riêng"
+      destroyOnClose
+    >
       {isLoading || !data ? (
         <Typography.Text type="secondary">Đang tải…</Typography.Text>
       ) : (
@@ -111,8 +124,12 @@ export function StandalonePaymentModal({
                     <Descriptions.Item label="Số tiền">
                       <CurrencyDisplay amount={data.expense.amount} />
                     </Descriptions.Item>
-                    <Descriptions.Item label="Ngày">{fmtDate(data.expense.expenseDate)}</Descriptions.Item>
-                    <Descriptions.Item label="Trả bởi">{data.expense.paidBy.name}</Descriptions.Item>
+                    <Descriptions.Item label="Ngày">
+                      {fmtDate(data.expense.expenseDate)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trả bởi">
+                      {data.expense.paidBy.name}
+                    </Descriptions.Item>
                   </Descriptions>
                   <Table
                     size="small"
@@ -144,7 +161,9 @@ export function StandalonePaymentModal({
                     />
                   ) : null}
                   {data.records.map((r) => {
-                    const canReviewStandalone = Boolean(uid && (r.receiverUserId === uid || isLeader))
+                    const canReviewStandalone = Boolean(
+                      uid && (r.receiverUserId === uid || isLeader),
+                    )
                     return (
                       <div
                         key={r.id}
@@ -152,7 +171,11 @@ export function StandalonePaymentModal({
                       >
                         {/* Header: một hàng cân, không chia cột lệch */}
                         <div className="flex gap-3 border-b border-stone-100 bg-stone-50/80 px-4 py-3">
-                          <Avatar className="shrink-0" size={44} src={r.payer.avatarUrl ?? undefined}>
+                          <Avatar
+                            className="shrink-0"
+                            size={44}
+                            src={r.payer.avatarUrl ?? undefined}
+                          >
                             {r.payer.name[0]}
                           </Avatar>
                           <div className="min-w-0 flex-1">
@@ -162,7 +185,10 @@ export function StandalonePaymentModal({
                               <span className="font-medium text-stone-800">{r.receiver.name}</span>
                             </div>
                             <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                              <CurrencyDisplay amount={r.amount} className="text-[15px] font-semibold text-brand-text" />
+                              <CurrencyDisplay
+                                amount={r.amount}
+                                className="text-[15px] font-semibold text-brand-text"
+                              />
                               {recordStatusTag(r.status)}
                             </div>
                           </div>
@@ -188,7 +214,10 @@ export function StandalonePaymentModal({
                           ) : null}
 
                           {r.payerComment ? (
-                            <Typography.Text type="secondary" className="block text-xs leading-relaxed">
+                            <Typography.Text
+                              type="secondary"
+                              className="block text-xs leading-relaxed"
+                            >
                               Ghi chú người trả: {r.payerComment}
                             </Typography.Text>
                           ) : null}
@@ -199,7 +228,9 @@ export function StandalonePaymentModal({
                                 groupId={groupId}
                                 uploadType="payment"
                                 value={proofByRecord[r.id] ?? []}
-                                onChange={(urls) => setProofByRecord((m) => ({ ...m, [r.id]: urls }))}
+                                onChange={(urls) =>
+                                  setProofByRecord((m) => ({ ...m, [r.id]: urls }))
+                                }
                               />
                               <div className="flex justify-end border-t border-stone-200 pt-4">
                                 <Button
@@ -214,11 +245,13 @@ export function StandalonePaymentModal({
                             </div>
                           ) : null}
 
-                          {r.status === 'PENDING' && canReviewStandalone && r.payerUserId !== uid ? (
+                          {r.status === 'PENDING' &&
+                          canReviewStandalone &&
+                          r.payerUserId !== uid ? (
                             <div className="space-y-3 rounded-lg border border-[#b8dbe8] bg-brand-soft/50 p-3">
                               <p className="m-0 text-sm leading-snug text-stone-600">
-                                Đã nhận tiền mặt hoặc chuyển khoản? Bạn có thể xác nhận ngay, không cần chờ ảnh từ
-                                người trả.
+                                Đã nhận tiền mặt hoặc chuyển khoản? Bạn có thể xác nhận ngay, không
+                                cần chờ ảnh từ người trả.
                               </p>
                               <div className="flex flex-wrap justify-end gap-2">
                                 <Button
@@ -233,7 +266,9 @@ export function StandalonePaymentModal({
                                           d.notified > 0 ? 'Đã gửi nhắc chuyển tiền' : 'Đã gửi',
                                         ),
                                       )
-                                      .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                      .catch((e) =>
+                                        message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                      )
                                   }
                                 >
                                   Nhắc chuyển tiền
@@ -267,7 +302,9 @@ export function StandalonePaymentModal({
                                           : 'Đã gửi nhắc',
                                       ),
                                     )
-                                    .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                    .catch((e) =>
+                                      message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                    )
                                 }
                               >
                                 Nhắc xác nhận
@@ -285,7 +322,12 @@ export function StandalonePaymentModal({
                               >
                                 Duyệt
                               </Button>
-                              <Button danger size="middle" loading={accept.isPending} onClick={() => void onAccept(r, false)}>
+                              <Button
+                                danger
+                                size="middle"
+                                loading={accept.isPending}
+                                onClick={() => void onAccept(r, false)}
+                              >
                                 Từ chối
                               </Button>
                             </div>
@@ -318,10 +360,14 @@ export function StandalonePaymentModal({
                                       void reopenRejected
                                         .mutateAsync(r.id)
                                         .then(() => {
-                                          message.success('Đã gửi yêu cầu thanh toán lại cho người trả')
+                                          message.success(
+                                            'Đã gửi yêu cầu thanh toán lại cho người trả',
+                                          )
                                           void refetch()
                                         })
-                                        .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                        .catch((e) =>
+                                          message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                        )
                                     }
                                   >
                                     Yêu cầu thanh toán lại
@@ -339,7 +385,9 @@ export function StandalonePaymentModal({
                                           message.success('Đã mở lại — vui lòng nộp chứng từ mới')
                                           void refetch()
                                         })
-                                        .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                        .catch((e) =>
+                                          message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                        )
                                     }
                                   >
                                     Cập nhật thanh toán lại

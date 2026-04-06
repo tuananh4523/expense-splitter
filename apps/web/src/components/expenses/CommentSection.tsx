@@ -53,7 +53,13 @@ export function CommentSection({ groupId, expenseId }: { groupId: string; expens
                         )
                       }}
                     >
-                      <Button type="text" danger size="small" icon={<DeleteOutlined />} aria-label="Xoá" />
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        aria-label="Xoá"
+                      />
                     </Popconfirm>,
                   ]
                 : []
@@ -71,9 +77,7 @@ export function CommentSection({ groupId, expenseId }: { groupId: string; expens
               description={
                 <div className="space-y-2">
                   <p className="whitespace-pre-wrap text-gray-800">{c.content}</p>
-                  {c.imageUrls?.length ? (
-                    <ResolvedImageList urls={c.imageUrls} compact />
-                  ) : null}
+                  {c.imageUrls?.length ? <ResolvedImageList urls={c.imageUrls} compact /> : null}
                 </div>
               }
             />

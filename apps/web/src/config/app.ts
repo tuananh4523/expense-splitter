@@ -21,7 +21,9 @@ export const APP_VERSION = String(pkg.version ?? '').trim() || '0.0.0'
 
 /** Tên tác giả (đọc từ `author` trong `apps/web/package.json`). */
 export const APP_AUTHOR =
-  typeof webPkg.author === 'string' && webPkg.author.trim() !== '' ? webPkg.author.trim() : 'Đỗ Văn Cường'
+  typeof webPkg.author === 'string' && webPkg.author.trim() !== ''
+    ? webPkg.author.trim()
+    : 'Đỗ Văn Cường'
 
 const ghId = webPkg.authorSocial?.github?.trim() || 'tuananh4523'
 const liId = webPkg.authorSocial?.linkedin?.trim() || 'tuananh4523'

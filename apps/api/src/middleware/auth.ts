@@ -1,6 +1,6 @@
 import { prisma } from '@expense/database'
-import { verifyAccessToken } from '../lib/jwt.js'
 import { createMiddleware } from 'hono/factory'
+import { verifyAccessToken } from '../lib/jwt.js'
 
 export const requireAuth = createMiddleware<{
   Variables: { userId: string; userRole: string; sessionJti: string }
@@ -20,10 +20,7 @@ export const requireAuth = createMiddleware<{
       select: { isActive: true, role: true },
     })
     if (!user?.isActive) {
-      return c.json(
-        { error: 'Tài khoản đã bị khóa', code: 'ACCOUNT_DISABLED' },
-        403,
-      )
+      return c.json({ error: 'Tài khoản đã bị khóa', code: 'ACCOUNT_DISABLED' }, 403)
     }
     const sess = await prisma.userSession.findUnique({
       where: { jti },

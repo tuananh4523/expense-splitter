@@ -1,8 +1,4 @@
-import {
-  DEFAULT_UI_THEME,
-  UI_THEME_IDS,
-  type UiThemeId,
-} from '@expense/types'
+import { DEFAULT_UI_THEME, UI_THEME_IDS, type UiThemeId } from '@expense/types'
 
 export const UI_THEME_STORAGE_KEY = 'expense-ui-theme'
 

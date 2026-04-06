@@ -92,7 +92,9 @@ const previewExpenseColumns: ColumnsType<SettlementPreviewExpenseItem> = [
     key: 'amount',
     align: 'right',
     width: 140,
-    render: (v: string) => <CurrencyDisplay amount={v} className="whitespace-nowrap tabular-nums font-medium" />,
+    render: (v: string) => (
+      <CurrencyDisplay amount={v} className="whitespace-nowrap tabular-nums font-medium" />
+    ),
   },
 ]
 
@@ -258,7 +260,9 @@ export default function NewSettlementPage() {
                 label="Kỳ"
                 validateStatus={formState.errors.range ? 'error' : ''}
                 help={
-                  formState.errors.range?.message ? String(formState.errors.range.message) : undefined
+                  formState.errors.range?.message
+                    ? String(formState.errors.range.message)
+                    : undefined
                 }
               >
                 <Controller
@@ -382,8 +386,8 @@ export default function NewSettlementPage() {
               <strong>
                 tổng chi trong kỳ <CurrencyDisplay amount={preview.periodExpensesTotal} />
               </strong>{' '}
-              ({preview.expenseCount} khoản chi chung). Luồng quyết toán tối giản (tổng các khoản phải chuyển):{' '}
-              <CurrencyDisplay amount={preview.totalAmount} />.
+              ({preview.expenseCount} khoản chi chung). Luồng quyết toán tối giản (tổng các khoản
+              phải chuyển): <CurrencyDisplay amount={preview.totalAmount} />.
             </Typography.Paragraph>
             <Collapse
               items={[
@@ -392,7 +396,9 @@ export default function NewSettlementPage() {
                   label: `Danh sách chi trong kỳ (${preview.expenseCount} khoản)`,
                   children:
                     preview.expenses.length === 0 ? (
-                      <Typography.Text type="secondary">Không có khoản chi chung nào trong kỳ.</Typography.Text>
+                      <Typography.Text type="secondary">
+                        Không có khoản chi chung nào trong kỳ.
+                      </Typography.Text>
                     ) : (
                       <Table<SettlementPreviewExpenseItem>
                         size="small"

@@ -1,5 +1,5 @@
 import { prisma } from '@expense/database'
-import * as Minio from 'minio'
+import type * as Minio from 'minio'
 import { getMinioClient, minioBucket, parseStoredObject } from './minio.js'
 
 /** Trích object name trong bucket app (để so khớp với MinIO). */
@@ -23,25 +23,18 @@ export async function collectReferencedObjectNames(): Promise<Set<string>> {
     for (const s of arr) add(s)
   }
 
-  const [
-    users,
-    groups,
-    banks,
-    expenses,
-    payments,
-    fundTx,
-    feedbacks,
-    comments,
-  ] = await Promise.all([
-    prisma.user.findMany({ select: { avatarUrl: true } }),
-    prisma.group.findMany({ select: { avatarUrl: true } }),
-    prisma.bankAccount.findMany({ select: { qrImageUrl: true } }),
-    prisma.expense.findMany({ select: { imageUrls: true } }),
-    prisma.paymentRecord.findMany({ select: { proofImageUrls: true } }),
-    prisma.fundTransaction.findMany({ select: { proofImageUrls: true } }),
-    prisma.feedback.findMany({ select: { imageUrls: true } }),
-    prisma.comment.findMany({ select: { imageUrls: true } }),
-  ])
+  const [users, groups, banks, expenses, payments, fundTx, feedbacks, comments] = await Promise.all(
+    [
+      prisma.user.findMany({ select: { avatarUrl: true } }),
+      prisma.group.findMany({ select: { avatarUrl: true } }),
+      prisma.bankAccount.findMany({ select: { qrImageUrl: true } }),
+      prisma.expense.findMany({ select: { imageUrls: true } }),
+      prisma.paymentRecord.findMany({ select: { proofImageUrls: true } }),
+      prisma.fundTransaction.findMany({ select: { proofImageUrls: true } }),
+      prisma.feedback.findMany({ select: { imageUrls: true } }),
+      prisma.comment.findMany({ select: { imageUrls: true } }),
+    ],
+  )
 
   for (const u of users) add(u.avatarUrl)
   for (const g of groups) add(g.avatarUrl)
@@ -88,7 +81,13 @@ export async function deleteOrphanStorageObjects(): Promise<OrphanCleanupResult>
   const bucket = minioBucket()
   const errors: string[] = []
   if (!client) {
-    return { scanned: 0, referenced: 0, deleted: 0, skippedUnsafe: 0, errors: ['MinIO chưa cấu hình'] }
+    return {
+      scanned: 0,
+      referenced: 0,
+      deleted: 0,
+      skippedUnsafe: 0,
+      errors: ['MinIO chưa cấu hình'],
+    }
   }
 
   const referenced = await collectReferencedObjectNames()

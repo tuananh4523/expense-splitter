@@ -1,6 +1,6 @@
 import { useCategories } from '@/hooks/useExpenses'
-import { Icon } from '@iconify/react'
 import type { ExpenseFilterInput } from '@expense/types'
+import { Icon } from '@iconify/react'
 import { Col, DatePicker, Form, Row, Select } from 'antd'
 import dayjs from 'dayjs'
 
@@ -67,7 +67,11 @@ export function ExpenseFilter({
                 return (
                   <span className="flex items-center gap-2">
                     {cat.icon ? (
-                      cat.icon.includes(':') ? <Icon icon={cat.icon} width={16} /> : <span>{cat.icon}</span>
+                      cat.icon.includes(':') ? (
+                        <Icon icon={cat.icon} width={16} />
+                      ) : (
+                        <span>{cat.icon}</span>
+                      )
                     ) : null}
                     {cat.name}
                   </span>
@@ -112,10 +116,14 @@ export function ExpenseFilter({
               value={scopeValue}
               onChange={(v) =>
                 v === 'standalone_incomplete'
-                  ? emit(
-                      { standaloneIncomplete: true },
-                      ['dateFrom', 'dateTo', 'status', 'categoryId', 'isStandalone', 'paidByUserId'],
-                    )
+                  ? emit({ standaloneIncomplete: true }, [
+                      'dateFrom',
+                      'dateTo',
+                      'status',
+                      'categoryId',
+                      'isStandalone',
+                      'paidByUserId',
+                    ])
                   : emit({ status: 'ACTIVE' }, ['standaloneIncomplete'])
               }
             />

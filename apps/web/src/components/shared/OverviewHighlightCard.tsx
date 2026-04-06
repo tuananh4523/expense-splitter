@@ -38,21 +38,25 @@ export function OverviewHighlightCard({
   onClick?: () => void
 }) {
   const { accent, iconBg } = VARIANT_ICON[variant]
-  const tileClass = ['highlight-tile', `highlight-tile--${variant}`, className].filter(Boolean).join(' ')
+  const tileClass = ['highlight-tile', `highlight-tile--${variant}`, className]
+    .filter(Boolean)
+    .join(' ')
 
   const body = (
     <div className="highlight-tile__inner">
-      <div
-        className="highlight-tile__icon"
-        style={{ background: iconBg, color: accent }}
-      >
+      <div className="highlight-tile__icon" style={{ background: iconBg, color: accent }}>
         <Icon icon={icon} width={24} />
       </div>
       <div className="highlight-tile__main">
         <div className="highlight-tile__head">
           <Typography.Text className="highlight-tile__title">{title}</Typography.Text>
           {showChevron ? (
-            <Icon icon="mdi:chevron-right" width={22} className="highlight-tile__chevron" aria-hidden />
+            <Icon
+              icon="mdi:chevron-right"
+              width={22}
+              className="highlight-tile__chevron"
+              aria-hidden
+            />
           ) : null}
         </div>
         {description ? (
@@ -68,18 +72,17 @@ export function OverviewHighlightCard({
   )
 
   const card = (
-    <Card
-      hoverable={Boolean(href || onClick)}
-      className={tileClass}
-      onClick={onClick}
-    >
+    <Card hoverable={Boolean(href || onClick)} className={tileClass} onClick={onClick}>
       {body}
     </Card>
   )
 
   if (href) {
     return (
-      <Link href={href} className="block h-full min-w-0 text-inherit no-underline hover:text-inherit hover:no-underline">
+      <Link
+        href={href}
+        className="block h-full min-w-0 text-inherit no-underline hover:text-inherit hover:no-underline"
+      >
         {card}
       </Link>
     )

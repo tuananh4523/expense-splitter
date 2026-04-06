@@ -1,8 +1,8 @@
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { fmtDate } from '@/utils/date'
-import { Icon } from '@iconify/react'
 import { BankOutlined, TeamOutlined } from '@ant-design/icons'
 import type { GroupDto } from '@expense/types'
+import { Icon } from '@iconify/react'
 import { Avatar, Card, Tag, Typography } from 'antd'
 import { useRouter } from 'next/router'
 
@@ -19,7 +19,11 @@ function groupVisual(group: GroupDto) {
   }
   if (group.icon) {
     return (
-      <Avatar size="large" className="shrink-0" style={{ background: `${group.color ?? '#0073AA'}33` }}>
+      <Avatar
+        size="large"
+        className="shrink-0"
+        style={{ background: `${group.color ?? '#0073AA'}33` }}
+      >
         {group.icon}
       </Avatar>
     )

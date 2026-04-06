@@ -1,6 +1,9 @@
 import AppLayout from '@/components/layout/AppLayout'
 import { api } from '@/lib/api'
 import { withAdmin } from '@/utils/withAdmin'
+import { PlusOutlined } from '@ant-design/icons'
+import { Icon } from '@iconify/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   App,
   Button,
@@ -15,11 +18,8 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
 import { useSession } from 'next-auth/react'
 import { useCallback, useState } from 'react'
-import { Icon } from '@iconify/react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const getServerSideProps = withAdmin()
 
@@ -98,7 +98,10 @@ export default function AdminUsersPage() {
   })
 
   const patchUser = useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: { role?: string; isActive?: boolean } }) => {
+    mutationFn: async ({
+      id,
+      body,
+    }: { id: string; body: { role?: string; isActive?: boolean } }) => {
       await api.patch(`/admin/users/${id}`, body)
     },
     onSuccess: (_d, { id }) => {
@@ -123,7 +126,12 @@ export default function AdminUsersPage() {
   })
 
   const createUser = useMutation({
-    mutationFn: async (body: { email: string; name: string; password: string; role: 'ADMIN' | 'USER' }) => {
+    mutationFn: async (body: {
+      email: string
+      name: string
+      password: string
+      role: 'ADMIN' | 'USER'
+    }) => {
       const res = await api.post<{ data: AdminUserRow }>('/admin/users', body)
       return res.data.data
     },
@@ -438,8 +446,8 @@ export default function AdminUsersPage() {
         {resetPw?.phase === 'form' ? (
           <Form form={resetForm} layout="vertical" requiredMark={false} className="pt-1">
             <Typography.Paragraph type="secondary" className="!-mt-1 !mb-3">
-              Nhập mật khẩu mới cho <strong>{resetPw.user.email}</strong>. Người dùng sẽ phải đổi mật khẩu khi
-              đăng nhập lại.
+              Nhập mật khẩu mới cho <strong>{resetPw.user.email}</strong>. Người dùng sẽ phải đổi
+              mật khẩu khi đăng nhập lại.
             </Typography.Paragraph>
             <Form.Item
               name="newPassword"
@@ -450,7 +458,11 @@ export default function AdminUsersPage() {
               ]}
               hasFeedback
             >
-              <Input.Password autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" maxLength={128} />
+              <Input.Password
+                autoComplete="new-password"
+                placeholder="Tối thiểu 6 ký tự"
+                maxLength={128}
+              />
             </Form.Item>
             <Form.Item
               name="confirmPassword"
@@ -479,8 +491,8 @@ export default function AdminUsersPage() {
             </Typography.Paragraph>
             <Input readOnly value={resetPw.plainPassword} className="font-mono" />
             <Typography.Paragraph type="secondary" className="mt-3 !mb-0">
-              Sao chép và gửi cho người dùng qua kênh an toàn. Họ sẽ được yêu cầu đổi mật khẩu sau khi đăng
-              nhập.
+              Sao chép và gửi cho người dùng qua kênh an toàn. Họ sẽ được yêu cầu đổi mật khẩu sau
+              khi đăng nhập.
             </Typography.Paragraph>
           </div>
         ) : null}
@@ -535,7 +547,11 @@ export default function AdminUsersPage() {
             ]}
             hasFeedback
           >
-            <Input.Password autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" maxLength={128} />
+            <Input.Password
+              autoComplete="new-password"
+              placeholder="Tối thiểu 6 ký tự"
+              maxLength={128}
+            />
           </Form.Item>
           <Form.Item
             name="confirmPassword"
@@ -580,8 +596,8 @@ export default function AdminUsersPage() {
       >
         {roleModal && session?.user?.id === roleModal.id ? (
           <Typography.Paragraph type="secondary" className="!mt-0 !mb-3 text-sm">
-            Bạn không thể tự hạ vai trò của mình xuống USER. Admin khác vẫn có thể đổi vai trò cho bạn hoặc cho
-            admin khác.
+            Bạn không thể tự hạ vai trò của mình xuống USER. Admin khác vẫn có thể đổi vai trò cho
+            bạn hoặc cho admin khác.
           </Typography.Paragraph>
         ) : null}
         <Select

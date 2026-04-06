@@ -1,13 +1,27 @@
 import AppLayout from '@/components/layout/AppLayout'
+import { useMe } from '@/hooks/useProfile'
 import { api } from '@/lib/api'
-import { withAdmin } from '@/utils/withAdmin'
 import { fmtDateTime } from '@/utils/date'
+import { withAdmin } from '@/utils/withAdmin'
 import type { AdminBroadcastHistoryItemDto, AdminBroadcastRecipientDto } from '@expense/types'
 import { Icon } from '@iconify/react'
-import { App, Button, Empty, Form, Input, Modal, Popconfirm, Select, Space, Spin, Table, Tooltip, Typography } from 'antd'
-import { useMe } from '@/hooks/useProfile'
-import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  App,
+  Button,
+  Empty,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Spin,
+  Table,
+  Tooltip,
+  Typography,
+} from 'antd'
+import { useMemo, useState } from 'react'
 
 export const getServerSideProps = withAdmin()
 
@@ -47,7 +61,10 @@ function BroadcastRecipientsPanel({ broadcastId }: { broadcastId: string }) {
       <Typography.Text strong className="mb-3 block text-[15px] text-wp-charcoal">
         Đã gửi tới {data.total} người
         {data.truncated ? (
-          <span className="font-normal text-wp-slate"> — hiển thị tối đa 5000 tên (sắp xếp theo tên).</span>
+          <span className="font-normal text-wp-slate">
+            {' '}
+            — hiển thị tối đa 5000 tên (sắp xếp theo tên).
+          </span>
         ) : null}
       </Typography.Text>
       <ul className="m-0 max-h-80 list-none space-y-0 overflow-y-auto overscroll-contain p-0 text-sm">
@@ -76,7 +93,9 @@ export default function AdminBroadcastPage() {
   const { data: broadcastRows = [], isLoading: broadcastsLoading } = useQuery({
     queryKey: ['admin', 'broadcasts'],
     queryFn: () =>
-      api.get<{ data: AdminBroadcastHistoryItemDto[] }>('/admin/broadcasts').then((r) => r.data.data),
+      api
+        .get<{ data: AdminBroadcastHistoryItemDto[] }>('/admin/broadcasts')
+        .then((r) => r.data.data),
   })
 
   const { data: userOptions = [], isLoading: usersLoading } = useQuery({
@@ -111,7 +130,9 @@ export default function AdminBroadcastPage() {
   const send = useMutation({
     mutationFn: (payload: { title: string; body: string; excludeUserIds: string[] }) =>
       api
-        .post<{ data: { broadcastId: string; sent: number } }>('/admin/broadcast', payload, { timeout: 120_000 })
+        .post<{ data: { broadcastId: string; sent: number } }>('/admin/broadcast', payload, {
+          timeout: 120_000,
+        })
         .then((r) => r.data.data),
     onSuccess: (d) => {
       message.success(`Đã gửi tới ${d.sent} tài khoản.`)
@@ -125,7 +146,9 @@ export default function AdminBroadcastPage() {
 
   const removeBroadcast = useMutation({
     mutationFn: (broadcastId: string) =>
-      api.delete<{ data: { deleted: number } }>(`/admin/broadcasts/${broadcastId}`).then((r) => r.data.data),
+      api
+        .delete<{ data: { deleted: number } }>(`/admin/broadcasts/${broadcastId}`)
+        .then((r) => r.data.data),
     onSuccess: (d) => {
       message.success(`Đã xóa ${d.deleted} thông báo.`)
       void qc.invalidateQueries({ queryKey: ['admin', 'broadcasts'] })
@@ -172,7 +195,9 @@ export default function AdminBroadcastPage() {
       key: 'sentAt',
       width: 160,
       render: (d: string) => (
-        <span className="whitespace-nowrap tabular-nums text-[13px] text-wp-slate">{fmtDateTime(d)}</span>
+        <span className="whitespace-nowrap tabular-nums text-[13px] text-wp-slate">
+          {fmtDateTime(d)}
+        </span>
       ),
     },
     {
@@ -204,7 +229,9 @@ export default function AdminBroadcastPage() {
       key: 'recipientCount',
       width: 140,
       align: 'right' as const,
-      render: (n: number) => <span className="tabular-nums text-[13px]">{n.toLocaleString('vi')}</span>,
+      render: (n: number) => (
+        <span className="tabular-nums text-[13px]">{n.toLocaleString('vi')}</span>
+      ),
     },
     {
       title: 'Thao tác',
@@ -249,7 +276,11 @@ export default function AdminBroadcastPage() {
   return (
     <AppLayout title="Quản trị — Thông báo hệ thống">
       <div className="mb-6 flex justify-end">
-        <Button type="primary" icon={<Icon icon="mdi:bullhorn-outline" width={18} />} onClick={openCreateModal}>
+        <Button
+          type="primary"
+          icon={<Icon icon="mdi:bullhorn-outline" width={18} />}
+          onClick={openCreateModal}
+        >
           Tạo thông báo
         </Button>
       </div>
@@ -272,34 +303,36 @@ export default function AdminBroadcastPage() {
       </Space>
 
       <Table<AdminBroadcastHistoryItemDto>
-          rowKey="broadcastId"
-          loading={broadcastsLoading}
-          scroll={{ x: 'max-content' }}
-          columns={columns}
-          dataSource={filteredRows}
-          pagination={false}
-          className="[&_.ant-table-thead>tr>th]:text-[13px]"
-          expandable={{
-            expandedRowRender: (record) => <BroadcastRecipientsPanel broadcastId={record.broadcastId} />,
-            expandIcon: ({ expanded, onExpand, record }) => (
-              <Tooltip title={expanded ? 'Thu gọn' : 'Bấm để xem gửi tới những ai'}>
-                <button
-                  type="button"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-(--color-text-muted) transition hover:bg-brand-soft hover:text-brand"
-                  aria-expanded={expanded}
-                  aria-label={expanded ? 'Thu gọn' : 'Xem danh sách người nhận'}
-                  onClick={(e) => onExpand(record, e)}
-                >
-                  <Icon
-                    icon={expanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}
-                    width={18}
-                    className="text-current"
-                  />
-                </button>
-              </Tooltip>
-            ),
-          }}
-        />
+        rowKey="broadcastId"
+        loading={broadcastsLoading}
+        scroll={{ x: 'max-content' }}
+        columns={columns}
+        dataSource={filteredRows}
+        pagination={false}
+        className="[&_.ant-table-thead>tr>th]:text-[13px]"
+        expandable={{
+          expandedRowRender: (record) => (
+            <BroadcastRecipientsPanel broadcastId={record.broadcastId} />
+          ),
+          expandIcon: ({ expanded, onExpand, record }) => (
+            <Tooltip title={expanded ? 'Thu gọn' : 'Bấm để xem gửi tới những ai'}>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-(--color-text-muted) transition hover:bg-brand-soft hover:text-brand"
+                aria-expanded={expanded}
+                aria-label={expanded ? 'Thu gọn' : 'Xem danh sách người nhận'}
+                onClick={(e) => onExpand(record, e)}
+              >
+                <Icon
+                  icon={expanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}
+                  width={18}
+                  className="text-current"
+                />
+              </button>
+            </Tooltip>
+          ),
+        }}
+      />
 
       <Modal
         title="Gửi thông báo hệ thống"
@@ -334,8 +367,17 @@ export default function AdminBroadcastPage() {
           >
             <Input placeholder="Ví dụ: Bảo trì hệ thống tối nay" maxLength={200} showCount />
           </Form.Item>
-          <Form.Item name="body" label="Nội dung" rules={[{ required: true, message: 'Nhập nội dung' }]}>
-            <Input.TextArea rows={6} placeholder="Nội dung hiển thị trong thông báo…" maxLength={10000} showCount />
+          <Form.Item
+            name="body"
+            label="Nội dung"
+            rules={[{ required: true, message: 'Nhập nội dung' }]}
+          >
+            <Input.TextArea
+              rows={6}
+              placeholder="Nội dung hiển thị trong thông báo…"
+              maxLength={10000}
+              showCount
+            />
           </Form.Item>
           <Form.Item
             name="excludeUserIds"

@@ -2,28 +2,22 @@ import AppLayout from '@/components/layout/AppLayout'
 import { AvatarUpload, type AvatarUploadRef } from '@/components/shared/AvatarUpload'
 import { BankQrPreviewModal } from '@/components/shared/BankQrPreviewModal'
 import type { BankAccountRow } from '@/hooks/useProfile'
+import { useCreateBank, useDeleteBank, useMe, usePatchBank, usePatchMe } from '@/hooks/useProfile'
 import { useResolveViewUrls } from '@/hooks/useResolveViewUrls'
 import { useUpload } from '@/hooks/useUpload'
-import {
-  useCreateBank,
-  useDeleteBank,
-  useMe,
-  usePatchBank,
-  usePatchMe,
-} from '@/hooks/useProfile'
 import { useAppUiTheme } from '@/theme/AppThemeProvider'
 import { withAuth } from '@/utils/withAuth'
+import { CheckOutlined } from '@ant-design/icons'
 import {
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGE_UPLOAD_MB,
   UI_THEME_IDS,
   UI_THEME_LABELS,
   UI_THEME_SWATCHES,
-  VIETNAM_BANKS,
   type UiThemeId,
+  VIETNAM_BANKS,
 } from '@expense/types'
 import { Icon } from '@iconify/react'
-import { CheckOutlined } from '@ant-design/icons'
 import {
   App,
   Avatar,
@@ -130,12 +124,11 @@ export default function ProfilePage() {
     [bankQrNewCanonical],
   )
   const { data: bankQrResolved = {} } = useResolveViewUrls(bankQrResolveKey)
-  const bankQrThumbUrl =
-    bankQrRemoved
-      ? null
-      : bankQrNewCanonical
-        ? (bankQrResolved[bankQrNewCanonical] ?? null)
-        : bankExistingQrSigned
+  const bankQrThumbUrl = bankQrRemoved
+    ? null
+    : bankQrNewCanonical
+      ? (bankQrResolved[bankQrNewCanonical] ?? null)
+      : bankExistingQrSigned
 
   useEffect(() => {
     if (!me || initialised.current) return
@@ -277,152 +270,156 @@ export default function ProfilePage() {
   return (
     <AppLayout title="Tài khoản của tôi">
       <Row gutter={[24, 24]}>
-          <Col xs={24} lg={9} style={{ maxWidth: 360 }}>
-            <Card title="Thông tin cơ bản">
-              <div className="mb-6 flex flex-col items-center gap-2">
-                <AvatarUpload
-                  value={avatarUrl}
-                  onChange={setAvatarUrl}
-                  uploadRef={avatarRef}
+        <Col xs={24} lg={9} style={{ maxWidth: 360 }}>
+          <Card title="Thông tin cơ bản">
+            <div className="mb-6 flex flex-col items-center gap-2">
+              <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} uploadRef={avatarRef} />
+              <Typography.Text type="secondary" className="max-w-[260px] text-center text-xs">
+                Chọn ảnh để xem trước ngay. Sau khi tải lên, bấm <strong>Lưu thay đổi</strong> để
+                cập nhật header và menu.
+              </Typography.Text>
+            </div>
+            <Form layout="vertical" requiredMark={false}>
+              <Form.Item label="Tên hiển thị">
+                <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+              </Form.Item>
+              <Form.Item label="Email" help="Email không thể thay đổi">
+                <Input value={me.email} disabled />
+              </Form.Item>
+              <Form.Item label="Số điện thoại" help="Định dạng: 0xxxxxxxxx">
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0xxxxxxxxx"
                 />
-                <Typography.Text type="secondary" className="max-w-[260px] text-center text-xs">
-                  Chọn ảnh để xem trước ngay. Sau khi tải lên, bấm <strong>Lưu thay đổi</strong> để cập nhật
-                  header và menu.
-                </Typography.Text>
-              </div>
-              <Form layout="vertical" requiredMark={false}>
-                <Form.Item label="Tên hiển thị">
-                  <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
-                </Form.Item>
-                <Form.Item label="Email" help="Email không thể thay đổi">
-                  <Input value={me.email} disabled />
-                </Form.Item>
-                <Form.Item label="Số điện thoại" help="Định dạng: 0xxxxxxxxx">
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0xxxxxxxxx" />
-                </Form.Item>
-                <Form.Item label="Mô tả">
-                  <Input.TextArea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    maxLength={300}
-                    rows={4}
-                    showCount
-                  />
-                </Form.Item>
-                <div className="flex justify-end">
-                  <Button type="primary" loading={patchMe.isPending} onClick={() => void saveProfile()}>
-                    Lưu thay đổi
-                  </Button>
-                </div>
-              </Form>
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={15} flex="1 1 auto">
-            <Card title="Tài khoản ngân hàng">
-              <div className="mb-4 flex flex-wrap justify-between gap-2">
-                <Typography.Text type="secondary">
-                  Tối đa 5 tài khoản ({me.bankAccounts.length}/5)
-                </Typography.Text>
-                <Button type="primary" onClick={() => openAddBank()}>
-                  Thêm tài khoản
+              </Form.Item>
+              <Form.Item label="Mô tả">
+                <Input.TextArea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  maxLength={300}
+                  rows={4}
+                  showCount
+                />
+              </Form.Item>
+              <div className="flex justify-end">
+                <Button
+                  type="primary"
+                  loading={patchMe.isPending}
+                  onClick={() => void saveProfile()}
+                >
+                  Lưu thay đổi
                 </Button>
               </div>
-              {me.bankAccounts.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-                  <Icon icon="fluent:box-24-regular" width={40} color="#D6D3D1" />
-                  <div style={{ marginTop: 12, color: '#78716C', fontSize: 14 }}>
-                    Chưa có tài khoản ngân hàng
-                  </div>
+            </Form>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={15} flex="1 1 auto">
+          <Card title="Tài khoản ngân hàng">
+            <div className="mb-4 flex flex-wrap justify-between gap-2">
+              <Typography.Text type="secondary">
+                Tối đa 5 tài khoản ({me.bankAccounts.length}/5)
+              </Typography.Text>
+              <Button type="primary" onClick={() => openAddBank()}>
+                Thêm tài khoản
+              </Button>
+            </div>
+            {me.bankAccounts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                <Icon icon="fluent:box-24-regular" width={40} color="#D6D3D1" />
+                <div style={{ marginTop: 12, color: '#78716C', fontSize: 14 }}>
+                  Chưa có tài khoản ngân hàng
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {me.bankAccounts.map((b) => (
-                    <Card
-                      key={b.id}
-                      size="small"
-                      style={{
-                        background: '#fff',
-                        border: '1px solid #E7E5E4',
-                        borderRadius: 12,
-                      }}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex gap-3">
-                          <Avatar
-                            style={{
-                              background: '#E5F4FA',
-                              color: '#0073AA',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {b.bankCode.slice(0, 2)}
-                          </Avatar>
-                          <div>
-                            <div className="font-semibold text-stone-900">{b.bankName}</div>
-                            <div className="font-mono text-stone-800">{b.accountNumber}</div>
-                            <div className="text-sm text-stone-500">{b.accountName}</div>
-                            {b.isDefault ? (
-                              <Badge status="processing" text="Mặc định" className="mt-1" />
-                            ) : null}
-                            {b.qrImageUrl ? (
-                              <div className="mt-1">
-                                <Button
-                                  type={b.isDefault ? 'primary' : 'link'}
-                                  size="small"
-                                  className={b.isDefault ? '' : '!h-auto !p-0'}
-                                  onClick={() => {
-                                    setListQrUrl(b.qrImageUrl)
-                                    setListQrModalOpen(true)
-                                  }}
-                                >
-                                  Xem mã QR
-                                </Button>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          <Button size="small" type="link" onClick={() => openEditBank(b)}>
-                            Sửa
-                          </Button>
-                          {!b.isDefault ? (
-                            <Button
-                              size="small"
-                              type="link"
-                              onClick={() =>
-                                void patchBank
-                                  .mutateAsync({ bankId: b.id, body: { isDefault: true } })
-                                  .then(() => message.success('Đã đặt mặc định'))
-                                  .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
-                              }
-                            >
-                              Đặt mặc định
-                            </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {me.bankAccounts.map((b) => (
+                  <Card
+                    key={b.id}
+                    size="small"
+                    style={{
+                      background: '#fff',
+                      border: '1px solid #E7E5E4',
+                      borderRadius: 12,
+                    }}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex gap-3">
+                        <Avatar
+                          style={{
+                            background: '#E5F4FA',
+                            color: '#0073AA',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {b.bankCode.slice(0, 2)}
+                        </Avatar>
+                        <div>
+                          <div className="font-semibold text-stone-900">{b.bankName}</div>
+                          <div className="font-mono text-stone-800">{b.accountNumber}</div>
+                          <div className="text-sm text-stone-500">{b.accountName}</div>
+                          {b.isDefault ? (
+                            <Badge status="processing" text="Mặc định" className="mt-1" />
                           ) : null}
-                          <Popconfirm
-                            title="Xóa tài khoản này?"
-                            onConfirm={() =>
-                              void delBank
-                                .mutateAsync(b.id)
-                                .then(() => message.success('Đã xóa'))
+                          {b.qrImageUrl ? (
+                            <div className="mt-1">
+                              <Button
+                                type={b.isDefault ? 'primary' : 'link'}
+                                size="small"
+                                className={b.isDefault ? '' : '!h-auto !p-0'}
+                                onClick={() => {
+                                  setListQrUrl(b.qrImageUrl)
+                                  setListQrModalOpen(true)
+                                }}
+                              >
+                                Xem mã QR
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        <Button size="small" type="link" onClick={() => openEditBank(b)}>
+                          Sửa
+                        </Button>
+                        {!b.isDefault ? (
+                          <Button
+                            size="small"
+                            type="link"
+                            onClick={() =>
+                              void patchBank
+                                .mutateAsync({ bankId: b.id, body: { isDefault: true } })
+                                .then(() => message.success('Đã đặt mặc định'))
                                 .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
                             }
                           >
-                            <Button size="small" danger type="link">
-                              Xóa
-                            </Button>
-                          </Popconfirm>
-                        </div>
+                            Đặt mặc định
+                          </Button>
+                        ) : null}
+                        <Popconfirm
+                          title="Xóa tài khoản này?"
+                          onConfirm={() =>
+                            void delBank
+                              .mutateAsync(b.id)
+                              .then(() => message.success('Đã xóa'))
+                              .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                          }
+                        >
+                          <Button size="small" danger type="link">
+                            Xóa
+                          </Button>
+                        </Popconfirm>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </Col>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </Card>
+        </Col>
 
-          {/* <Col span={24}>
+        {/* <Col span={24}>
             <Card title="Giao diện màu">
               <Typography.Paragraph type="secondary" className="!mb-4 max-w-2xl text-sm">
                 Bảng màu kiểu WordPress Admin. Khi đã đăng nhập, lựa chọn được lưu theo tài khoản; trình duyệt
@@ -431,7 +428,7 @@ export default function ProfilePage() {
               <ProfileThemeGrid />
             </Card>
           </Col> */}
-        </Row>
+      </Row>
 
       <Modal
         title={bankEditId ? 'Sửa tài khoản ngân hàng' : 'Thêm tài khoản ngân hàng'}

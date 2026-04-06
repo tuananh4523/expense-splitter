@@ -108,7 +108,8 @@ export default function JoinGroupPage() {
       message.error('Nhập mã mời')
       return
     }
-    void join.mutateAsync(c)
+    void join
+      .mutateAsync(c)
       .then((res) => {
         if (res.pendingApproval) {
           message.success('Đã gửi yêu cầu tham gia, chờ quản trị viên duyệt')

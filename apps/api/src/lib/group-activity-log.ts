@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@expense/database'
+import type { Prisma, prisma } from '@expense/database'
 
 type Db = Prisma.TransactionClient | typeof prisma
 

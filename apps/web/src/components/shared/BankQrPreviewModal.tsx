@@ -44,7 +44,8 @@ export function BankQrPreviewModal({
       ) : null}
       {imageUrl && loadError ? (
         <Typography.Paragraph type="danger" className="!mb-0 text-center text-sm">
-          Không tải được ảnh QR (hết hạn liên kết hoặc lỗi mạng). Thử đóng và mở lại, hoặc tải lại trang.
+          Không tải được ảnh QR (hết hạn liên kết hoặc lỗi mạng). Thử đóng và mở lại, hoặc tải lại
+          trang.
         </Typography.Paragraph>
       ) : null}
       {!imageUrl && open ? (

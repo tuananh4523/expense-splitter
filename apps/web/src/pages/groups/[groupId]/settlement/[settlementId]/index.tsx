@@ -1,5 +1,5 @@
-import AppLayout from '@/components/layout/AppLayout'
 import { MemberProfileDrawer } from '@/components/groups/MemberProfileDrawer'
+import AppLayout from '@/components/layout/AppLayout'
 import { ConfirmPaymentModal } from '@/components/settlement/ConfirmPaymentModal'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { MemberAvatarNameButton } from '@/components/shared/MemberAvatarNameButton'
@@ -12,15 +12,26 @@ import {
   useRequestSettlementPaymentReview,
   useSettlement,
 } from '@/hooks/useSettlement'
-import { paymentRecordStatusVi, settlementStatusVi } from '@/utils/statusLabels'
-import { fmtDate, timeAgo } from '@/utils/date'
 import { formatVND } from '@/utils/currency'
+import { fmtDate, timeAgo } from '@/utils/date'
 import { isSettlementDeletable } from '@/utils/settlementDeletable'
+import { paymentRecordStatusVi, settlementStatusVi } from '@/utils/statusLabels'
 import { withAuth } from '@/utils/withAuth'
-import { Icon } from '@iconify/react'
 import { BellOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { MemberDto, PaymentRecordDto, SettlementExpenseInBatchDto } from '@expense/types'
-import { Alert, App, Button, Card, Collapse, Popconfirm, Progress, Space, Table, Tag, Typography } from 'antd'
+import {
+  Alert,
+  App,
+  Button,
+  Card,
+  Collapse,
+  Popconfirm,
+  Progress,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
@@ -150,7 +161,9 @@ export default function SettlementDetailPage() {
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
-      render: (v: string) => <CurrencyDisplay amount={v} className="whitespace-nowrap font-medium tabular-nums" />,
+      render: (v: string) => (
+        <CurrencyDisplay amount={v} className="whitespace-nowrap font-medium tabular-nums" />
+      ),
     },
     {
       title: 'Ngày',
@@ -168,8 +181,7 @@ export default function SettlementDetailPage() {
       key: 'expenseStatus',
       width: 150,
       render: (_, r) => {
-        const st =
-          r.status ?? (settlement?.status === 'COMPLETED' ? 'SETTLED' : 'ACTIVE')
+        const st = r.status ?? (settlement?.status === 'COMPLETED' ? 'SETTLED' : 'ACTIVE')
         return st === 'SETTLED' ? (
           <Tag color="success">Đã chốt tổng kết</Tag>
         ) : (
@@ -254,7 +266,11 @@ export default function SettlementDetailPage() {
           },
         }),
         render: (_, r) => (
-          <PaymentPersonCell userId={r.receiverUserId} user={r.receiver} onOpen={openMemberProfile} />
+          <PaymentPersonCell
+            userId={r.receiverUserId}
+            user={r.receiver}
+            onOpen={openMemberProfile}
+          />
         ),
       },
       {
@@ -313,7 +329,9 @@ export default function SettlementDetailPage() {
                       void deleteSettlement
                         .mutateAsync(settlementId)
                         .then(() => message.success('Đã xoá đợt tổng kết'))
-                        .catch((e) => message.error(e instanceof Error ? e.message : 'Không xoá được'))
+                        .catch((e) =>
+                          message.error(e instanceof Error ? e.message : 'Không xoá được'),
+                        )
                     }
                   >
                     <Button danger size="small" loading={deleteSettlement.isPending}>
@@ -325,20 +343,29 @@ export default function SettlementDetailPage() {
             >
               <div className="flex flex-col gap-3 text-left">
                 <div>
-                  <Typography.Text type="secondary" className="mb-0.5 block text-xs font-medium uppercase tracking-wide">
+                  <Typography.Text
+                    type="secondary"
+                    className="mb-0.5 block text-xs font-medium uppercase tracking-wide"
+                  >
                     Kỳ
                   </Typography.Text>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     <Typography.Text className="text-base font-semibold text-stone-900">
                       {fmtDate(settlement.periodStart)} — {fmtDate(settlement.periodEnd)}
                     </Typography.Text>
-                    <Tag color={settlementHeaderTagColor[settlement.status] ?? 'default'} className="!m-0">
+                    <Tag
+                      color={settlementHeaderTagColor[settlement.status] ?? 'default'}
+                      className="!m-0"
+                    >
                       {settlementStatusVi(settlement.status)}
                     </Tag>
                   </div>
                 </div>
                 <div>
-                  <Typography.Text type="secondary" className="mb-0.5 block text-xs font-medium uppercase tracking-wide">
+                  <Typography.Text
+                    type="secondary"
+                    className="mb-0.5 block text-xs font-medium uppercase tracking-wide"
+                  >
                     Số tiền còn chờ thanh toán
                   </Typography.Text>
                   <CurrencyDisplay
@@ -347,17 +374,27 @@ export default function SettlementDetailPage() {
                   />
                 </div>
                 <div className="border-t border-stone-100 pt-3">
-                  <Typography.Text type="secondary" className="mb-0.5 block text-xs font-medium uppercase tracking-wide">
+                  <Typography.Text
+                    type="secondary"
+                    className="mb-0.5 block text-xs font-medium uppercase tracking-wide"
+                  >
                     Tổng kỳ
                   </Typography.Text>
                   <CurrencyDisplay
                     amount={settlement.periodExpensesTotal}
                     className="text-2xl font-bold tracking-tight text-stone-900"
                   />
-                  <Typography.Text type="secondary" className="mt-1.5 block text-xs leading-relaxed">
+                  <Typography.Text
+                    type="secondary"
+                    className="mt-1.5 block text-xs leading-relaxed"
+                  >
                     Tổng tiền các khoản chi chung trong kỳ (cộng hết từng bill). Đợt tạo ra còn tính{' '}
-                    <strong>quỹ trong kỳ</strong> vào cân bằng (xem bản lưu số dư thành viên). Luồng phải chuyển tay:{' '}
-                    <CurrencyDisplay amount={settlement.totalAmount} className="tabular-nums font-medium" />
+                    <strong>quỹ trong kỳ</strong> vào cân bằng (xem bản lưu số dư thành viên). Luồng
+                    phải chuyển tay:{' '}
+                    <CurrencyDisplay
+                      amount={settlement.totalAmount}
+                      className="tabular-nums font-medium"
+                    />
                   </Typography.Text>
                 </div>
               </div>
@@ -388,7 +425,8 @@ export default function SettlementDetailPage() {
                   </Typography.Text>
                 ) : null}
                 <Typography.Paragraph type="secondary" className="!mb-0 !mt-2 text-xs">
-                  Bấm tên người trả / người nhận để xem hồ sơ. Mở rộng hàng để xem chứng từ và thao tác.
+                  Bấm tên người trả / người nhận để xem hồ sơ. Mở rộng hàng để xem chứng từ và thao
+                  tác.
                 </Typography.Paragraph>
               </div>
               <Table<PaymentRecordDto>
@@ -461,7 +499,9 @@ export default function SettlementDetailPage() {
                                         : 'Đã gửi nhắc',
                                     ),
                                   )
-                                  .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                  .catch((e) =>
+                                    message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                  )
                               }
                             >
                               Nhắc xác nhận
@@ -514,9 +554,13 @@ export default function SettlementDetailPage() {
                                       void reopenRejected
                                         .mutateAsync(r.id)
                                         .then(() =>
-                                          message.success('Đã gửi yêu cầu thanh toán lại cho người trả'),
+                                          message.success(
+                                            'Đã gửi yêu cầu thanh toán lại cho người trả',
+                                          ),
                                         )
-                                        .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                        .catch((e) =>
+                                          message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                        )
                                     }
                                   >
                                     Yêu cầu thanh toán lại
@@ -533,7 +577,9 @@ export default function SettlementDetailPage() {
                                         .then(() =>
                                           message.success('Đã mở lại — vui lòng nộp chứng từ mới'),
                                         )
-                                        .catch((e) => message.error(e instanceof Error ? e.message : 'Lỗi'))
+                                        .catch((e) =>
+                                          message.error(e instanceof Error ? e.message : 'Lỗi'),
+                                        )
                                     }
                                   >
                                     Cập nhật thanh toán lại
@@ -562,7 +608,11 @@ export default function SettlementDetailPage() {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barData}>
                               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                              <YAxis width={88} tick={{ fontSize: 10 }} tickFormatter={(v) => formatVND(v)} />
+                              <YAxis
+                                width={88}
+                                tick={{ fontSize: 10 }}
+                                tickFormatter={(v) => formatVND(v)}
+                              />
                               <Tooltip formatter={(v) => formatVND(Number(v))} />
                               <Bar dataKey="paid" name="Đã trả (bill)" fill="#1677ff" />
                               <Bar dataKey="fund" name="Quỹ (kỳ)" fill="#00a32a" />
@@ -601,7 +651,8 @@ export default function SettlementDetailPage() {
 
             <Card title="Chi tiêu trong đợt">
               <Typography.Paragraph type="secondary" className="!mb-3 !mt-0 text-sm">
-                Chi chung trong đợt (không gồm chi riêng). Dữ liệu lấy từ hệ thống hoặc bản lưu lúc tạo đợt nếu bản ghi cũ chưa có liên kết đầy đủ trên chi tiêu.
+                Chi chung trong đợt (không gồm chi riêng). Dữ liệu lấy từ hệ thống hoặc bản lưu lúc
+                tạo đợt nếu bản ghi cũ chưa có liên kết đầy đủ trên chi tiêu.
               </Typography.Paragraph>
               {fromSnapshotOnly ? (
                 <Alert

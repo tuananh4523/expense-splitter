@@ -3,10 +3,10 @@ import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { api } from '@/lib/api'
 import { withAdmin } from '@/utils/withAdmin'
 import { Icon } from '@iconify/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Input, Popconfirm, Space, Table, Tag, Tooltip } from 'antd'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const getServerSideProps = withAdmin()
 
@@ -120,7 +120,8 @@ export default function AdminGroupsPage() {
             title: 'Trạng thái',
             dataIndex: 'isActive',
             align: 'left',
-            render: (a: boolean) => (a ? <Tag color="green">Hoạt động</Tag> : <Tag color="default">Tắt</Tag>),
+            render: (a: boolean) =>
+              a ? <Tag color="green">Hoạt động</Tag> : <Tag color="default">Tắt</Tag>,
           },
           {
             title: '',
@@ -150,9 +151,11 @@ export default function AdminGroupsPage() {
                       type="text"
                       size="small"
                       icon={
-                        g.isActive
-                          ? <Icon icon="mdi:toggle-switch-off-outline" width={16} />
-                          : <Icon icon="mdi:toggle-switch-outline" width={16} />
+                        g.isActive ? (
+                          <Icon icon="mdi:toggle-switch-off-outline" width={16} />
+                        ) : (
+                          <Icon icon="mdi:toggle-switch-outline" width={16} />
+                        )
                       }
                     />
                   </Tooltip>
@@ -178,7 +181,12 @@ export default function AdminGroupsPage() {
                   onConfirm={() => deleteGroup.mutate(g.id)}
                 >
                   <Tooltip title="Xóa nhóm">
-                    <Button type="text" size="small" danger icon={<Icon icon="mdi:trash-can-outline" width={16} />} />
+                    <Button
+                      type="text"
+                      size="small"
+                      danger
+                      icon={<Icon icon="mdi:trash-can-outline" width={16} />}
+                    />
                   </Tooltip>
                 </Popconfirm>
               </Space>

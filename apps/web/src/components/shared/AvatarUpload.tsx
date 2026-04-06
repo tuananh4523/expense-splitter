@@ -1,6 +1,6 @@
 import { useUpload } from '@/hooks/useUpload'
-import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '@expense/types'
 import { PlusOutlined } from '@ant-design/icons'
+import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '@expense/types'
 import { App, Spin, Upload } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
@@ -38,17 +38,26 @@ export function AvatarUpload({
   const pendingFileRef = useRef<File | null>(null)
   const blobUrlRef = useRef<string | null>(null)
   const onChangeRef = useRef(onChange)
-  useEffect(() => { onChangeRef.current = onChange })
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
 
   const revokeBlob = (u: string | null) => {
     if (u?.startsWith('blob:')) URL.revokeObjectURL(u)
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => () => { if (blobUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(blobUrlRef.current) }, [])
+  useEffect(
+    () => () => {
+      if (blobUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(blobUrlRef.current)
+    },
+    [],
+  )
 
   useImperativeHandle(uploadRef, () => ({
-    get hasPending() { return pendingFileRef.current != null },
+    get hasPending() {
+      return pendingFileRef.current != null
+    },
     uploadPending: async () => {
       const file = pendingFileRef.current
       if (!file) return null
