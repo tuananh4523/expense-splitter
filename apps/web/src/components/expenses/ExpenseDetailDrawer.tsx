@@ -1,3 +1,4 @@
+import { CategoryLabel } from '@/components/expenses/CategoryLabel'
 import { CommentSection } from '@/components/expenses/CommentSection'
 import { MemberProfileDrawer } from '@/components/groups/MemberProfileDrawer'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
@@ -137,14 +138,13 @@ export function ExpenseDetailDrawer({
                           key: 'category',
                           label: 'Danh mục',
                           children: expense.category ? (
-                            <span className="inline-flex items-center gap-1.5 text-stone-800">
-                              {expense.category.icon?.includes(':') ? (
-                                <Icon icon={expense.category.icon} width={16} />
-                              ) : expense.category.icon ? (
-                                <span>{expense.category.icon}</span>
-                              ) : null}
-                              {expense.category.name}
-                            </span>
+                            <CategoryLabel
+                              name={expense.category.name}
+                              icon={expense.category.icon}
+                              color={expense.category.color}
+                              iconSize={16}
+                              className="text-base"
+                            />
                           ) : (
                             <Typography.Text type="secondary">—</Typography.Text>
                           ),

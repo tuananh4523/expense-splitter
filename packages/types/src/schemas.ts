@@ -106,6 +106,10 @@ export const expenseTagsField = z
   .transform((v) => normalizeExpenseTags(v))
   .pipe(z.array(z.string().max(80)).max(50))
 
+export const updateGroupPresetTagsSchema = z.object({
+  tags: expenseTagsField,
+})
+
 export const splitItemSchema = z.object({
   userId: z.string().cuid(),
   amount: z.number().nonnegative().optional(),
@@ -234,14 +238,17 @@ export const expenseFilterSchema = paginationSchema.extend({
   categoryId: z.string().cuid().optional(),
   paidByUserId: z.string().cuid().optional(),
   status: z.enum(['ACTIVE', 'SETTLED', 'STANDALONE_DONE']).optional(),
-  /**
-   * Admin browse: xem cả bản ghi đã xoá mềm.
-   * Member thường: tham số bị bỏ qua ở API.
-   */
+  /** Gồm cả chi đã xoá mềm (thành viên nhóm hoặc admin xem nhóm) */
   includeDeleted: z.preprocess((val) => {
     if (val === undefined || val === null || val === '') return undefined
     if (val === true || val === 'true' || val === '1') return true
     if (val === false || val === 'false' || val === '0') return false
+    return undefined
+  }, z.boolean().optional()),
+  /** Chỉ các khoản đã xoá mềm (cần kèm includeDeleted) */
+  deletedOnly: z.preprocess((val) => {
+    if (val === undefined || val === null || val === '') return undefined
+    if (val === true || val === 'true' || val === '1') return true
     return undefined
   }, z.boolean().optional()),
   /** Query: client có thể gửi boolean hoặc chuỗi */

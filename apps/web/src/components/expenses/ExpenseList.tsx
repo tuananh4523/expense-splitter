@@ -1,6 +1,8 @@
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { fmtDate } from '@/utils/date'
+import { expenseCanRestore } from '@/utils/expenseSoftDelete'
+import { CategoryLabel } from '@/components/expenses/CategoryLabel'
 import {
   expenseLockedForEditDelete,
   expenseStatusColor,
@@ -24,6 +26,8 @@ export function ExpenseList({
   onStandaloneOpen,
   onEditOpen,
   onDeleteExpense,
+  onRestoreExpense,
+  emptyDescription,
 }: {
   groupId: string
   data: ExpenseDto[]
@@ -36,6 +40,8 @@ export function ExpenseList({
   onStandaloneOpen?: (expenseId: string) => void
   onEditOpen?: (expenseId: string) => void
   onDeleteExpense?: (expenseId: string) => void
+  onRestoreExpense?: (expenseId: string) => void
+  emptyDescription?: string
 }) {
   const columns: ColumnsType<ExpenseDto> = [
     {
@@ -46,6 +52,11 @@ export function ExpenseList({
       render: (t: string, r) => (
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="min-w-0">{t}</span>
+          {r.deletedAt ? (
+            <Tag color="default" className="!m-0 shrink-0">
+              Đã xóa
+            </Tag>
+          ) : null}
           {r.isStandalone ? (
             <Tag color="purple" className="!m-0 shrink-0">
               Riêng
@@ -76,16 +87,12 @@ export function ExpenseList({
       align: 'left',
       render: (_, r) =>
         r.category ? (
-          <span className="flex items-center gap-1">
-            {r.category.icon ? (
-              r.category.icon.includes(':') ? (
-                <Icon icon={r.category.icon} width={14} />
-              ) : (
-                <span>{r.category.icon}</span>
-              )
-            ) : null}
-            {r.category.name}
-          </span>
+          <CategoryLabel
+            name={r.category.name}
+            icon={r.category.icon}
+            color={r.category.color}
+            iconSize={14}
+          />
         ) : (
           <span className="text-stone-300">—</span>
         ),
@@ -110,65 +117,104 @@ export function ExpenseList({
       title: '',
       key: 'actions',
       align: 'right',
-      width: 80,
-      render: (_, r) => (
-        <div
-          className="flex items-center justify-end gap-1"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          {r.isStandalone ? (
-            <Tooltip title="Thanh toán riêng">
-              <Button
-                type="text"
-                size="small"
-                icon={<Icon icon="mdi:wallet-outline" width={16} />}
-                onClick={() => onStandaloneOpen?.(r.id)}
-              />
-            </Tooltip>
-          ) : null}
-          {onEditOpen && !expenseLockedForEditDelete(r.status) ? (
-            <Tooltip title="Sửa chi tiêu">
-              <Button
-                type="text"
-                size="small"
-                icon={<Icon icon="mdi:pencil-outline" width={16} />}
-                onClick={() => onEditOpen(r.id)}
-              />
-            </Tooltip>
-          ) : null}
-          {onDeleteExpense && !expenseLockedForEditDelete(r.status) ? (
-            <Popconfirm
-              title="Xoá chi tiêu này?"
-              okText="Xoá"
-              okButtonProps={{ danger: true }}
-              onConfirm={() => onDeleteExpense(r.id)}
-            >
-              <Tooltip title="Xoá chi tiêu">
+      width: 148,
+      render: (_, r) => {
+        const isDeleted = Boolean(r.deletedAt)
+        const canRestore = isDeleted && expenseCanRestore(r.deletedAt)
+        return (
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {isDeleted && onRestoreExpense ? (
+              canRestore ? (
+                <Popconfirm
+                  title="Khôi phục chi tiêu đã xóa?"
+                  description="Chi tiêu sẽ hiện lại trong danh sách chính."
+                  okText="Khôi phục"
+                  cancelText="Huỷ"
+                  onConfirm={() => onRestoreExpense(r.id)}
+                >
+                  <Tooltip title="Khôi phục (trong 7 ngày)">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<Icon icon="mdi:restore" width={16} />}
+                    />
+                  </Tooltip>
+                </Popconfirm>
+              ) : (
+                <Tooltip title="Đã quá 7 ngày — không thể khôi phục">
+                  <Button type="text" size="small" disabled icon={<Icon icon="mdi:restore" width={16} />} />
+                </Tooltip>
+              )
+            ) : null}
+            {!isDeleted && r.isStandalone ? (
+              <Tooltip title="Thanh toán riêng">
                 <Button
                   type="text"
                   size="small"
-                  danger
-                  icon={<Icon icon="mdi:trash-can-outline" width={16} />}
+                  icon={<Icon icon="mdi:wallet-outline" width={16} />}
+                  onClick={() => onStandaloneOpen?.(r.id)}
                 />
               </Tooltip>
-            </Popconfirm>
-          ) : null}
-          <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              size="small"
-              icon={<Icon icon="mdi:eye-outline" width={16} />}
-              onClick={() => onRowOpen?.(r.id)}
-            />
-          </Tooltip>
-        </div>
-      ),
+            ) : null}
+            {!isDeleted && onEditOpen && !expenseLockedForEditDelete(r.status) ? (
+              <Tooltip title="Sửa chi tiêu">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<Icon icon="mdi:pencil-outline" width={16} />}
+                  onClick={() => onEditOpen(r.id)}
+                />
+              </Tooltip>
+            ) : null}
+            {!isDeleted && onDeleteExpense && !expenseLockedForEditDelete(r.status) ? (
+              <Popconfirm
+                title="Xoá chi tiêu này?"
+                description="Có thể khôi phục trong 7 ngày ở mục «Đã xóa»."
+                okText="Xoá"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => onDeleteExpense(r.id)}
+              >
+                <Tooltip title="Xoá chi tiêu">
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<Icon icon="mdi:trash-can-outline" width={16} />}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            ) : null}
+            {!isDeleted ? (
+              <Tooltip title="Xem chi tiết">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<Icon icon="mdi:eye-outline" width={16} />}
+                  onClick={() => onRowOpen?.(r.id)}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title="Chi đã xóa — không xem chi tiết tại đây">
+                <Button
+                  type="text"
+                  size="small"
+                  disabled
+                  icon={<Icon icon="mdi:eye-off-outline" width={16} />}
+                />
+              </Tooltip>
+            )}
+          </div>
+        )
+      },
     },
   ]
 
   if (!loading && !data.length) {
-    return <EmptyState description="Chưa có chi tiêu" />
+    return <EmptyState description={emptyDescription ?? 'Chưa có chi tiêu'} />
   }
 
   return (
@@ -178,7 +224,12 @@ export function ExpenseList({
       columns={columns}
       dataSource={data}
       rowClassName={(record) =>
-        record.standaloneAttention ? 'expense-row-standalone-attention' : ''
+        [
+          record.standaloneAttention ? 'expense-row-standalone-attention' : '',
+          record.deletedAt ? 'expense-row-soft-deleted opacity-80' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
       }
       pagination={{
         current: page,

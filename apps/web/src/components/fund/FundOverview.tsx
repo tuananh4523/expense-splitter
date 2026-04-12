@@ -18,7 +18,7 @@ export function FundOverview({
   const threshold = fund ? Number.parseFloat(fund.lowThreshold) : 0
   const pct =
     threshold > 0 ? Math.min(100, Math.round((balance / threshold) * 100)) : balance > 0 ? 100 : 0
-  const low = Boolean(fund && threshold > 0 && balance < threshold)
+  const low = Boolean(fund && threshold > 0 && balance <= threshold)
 
   return (
     <Card
@@ -33,7 +33,11 @@ export function FundOverview({
       </Typography.Text>
       <CurrencyDisplay
         amount={fund?.balance ?? 0}
-        className="text-2xl font-semibold tabular-nums"
+        className={
+          low
+            ? 'text-2xl font-semibold tabular-nums text-[#cf1322]'
+            : 'text-2xl font-semibold tabular-nums'
+        }
       />
       {fund ? (
         <Typography.Paragraph type="secondary" className="mt-2 mb-0 text-sm">

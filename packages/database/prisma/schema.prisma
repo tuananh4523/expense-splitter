@@ -235,6 +235,10 @@ model Group {
   requireApproval Boolean   @default(false)
   debtReminderEnabled Boolean @default(false)
   debtReminderDays    Int     @default(7)
+  /**
+   * Thẻ gợi ý của nhóm (hiện trong form chi tiêu); không ràng buộc — chi tiêu vẫn có thể dùng thẻ khác.
+   */
+  presetTags      String[]  @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

@@ -24,6 +24,12 @@ function groupSubItems(g: GroupDto): MenuProps['items'] {
       title: `${g.name} — Chi tiêu`,
     },
     {
+      key: `/groups/${g.id}/settlement`,
+      icon: <Icon icon="mdi:calculator-variant" width={16} color="currentColor" />,
+      label: 'Tổng kết',
+      title: `${g.name} — Tổng kết`,
+    },
+    {
       key: `/groups/${g.id}/members`,
       icon: <Icon icon="mdi:account-multiple" width={16} color="currentColor" />,
       label: 'Thành viên',
@@ -36,10 +42,10 @@ function groupSubItems(g: GroupDto): MenuProps['items'] {
       title: `${g.name} — Quỹ nhóm`,
     },
     {
-      key: `/groups/${g.id}/settlement`,
-      icon: <Icon icon="mdi:calculator-variant" width={16} color="currentColor" />,
-      label: 'Tổng kết',
-      title: `${g.name} — Tổng kết`,
+      key: `/groups/${g.id}/labels`,
+      icon: <Icon icon="mdi:tag-multiple-outline" width={16} color="currentColor" />,
+      label: 'Danh mục & thẻ',
+      title: `${g.name} — Danh mục & thẻ`,
     },
     {
       key: `/groups/${g.id}/activity`,

@@ -1,17 +1,19 @@
+import { CategoryLabel } from '@/components/expenses/CategoryLabel'
 import { useCategories } from '@/hooks/useExpenses'
 import type { ExpenseFilterInput } from '@expense/types'
-import { Icon } from '@iconify/react'
 import { Col, DatePicker, Form, Row, Select } from 'antd'
 import dayjs from 'dayjs'
 
 export function ExpenseFilter({
+  groupId,
   value,
   onChange,
 }: {
+  groupId: string
   value: Partial<ExpenseFilterInput>
   onChange: (next: Partial<ExpenseFilterInput>) => void
 }) {
-  const { data: categories = [] } = useCategories()
+  const { data: categories = [] } = useCategories(groupId)
 
   const emit = (patch: Partial<ExpenseFilterInput>, clear?: (keyof ExpenseFilterInput)[]) => {
     const next = { ...value, page: 1, ...patch }
@@ -19,7 +21,12 @@ export function ExpenseFilter({
     onChange(next)
   }
 
-  const scopeValue = value.standaloneIncomplete === true ? 'standalone_incomplete' : 'all'
+  const scopeValue =
+    value.standaloneIncomplete === true
+      ? 'standalone_incomplete'
+      : value.includeDeleted === true && value.deletedOnly === true
+        ? 'deleted'
+        : 'all'
 
   return (
     <Form layout="vertical" className="expense-filter-form">
@@ -57,25 +64,18 @@ export function ExpenseFilter({
             <Select
               allowClear
               showSearch
-              optionFilterProp="label"
               placeholder="Tất cả"
               className="w-full"
-              options={categories.map((c) => ({ value: c.id, label: c.name }))}
-              optionRender={(opt) => {
-                const cat = categories.find((c) => c.id === opt.value)
-                if (!cat) return opt.label
-                return (
-                  <span className="flex items-center gap-2">
-                    {cat.icon ? (
-                      cat.icon.includes(':') ? (
-                        <Icon icon={cat.icon} width={16} />
-                      ) : (
-                        <span>{cat.icon}</span>
-                      )
-                    ) : null}
-                    {cat.name}
-                  </span>
-                )
+              options={categories.map((c) => ({
+                value: c.id,
+                label: (
+                  <CategoryLabel name={c.name} icon={c.icon} color={c.color} iconSize={16} />
+                ),
+              }))}
+              filterOption={(input, opt) => {
+                const cat = categories.find((c) => c.id === opt?.value)
+                if (!cat) return false
+                return cat.name.toLowerCase().includes(input.trim().toLowerCase())
               }}
               value={value.categoryId ?? null}
               onChange={(v) =>
@@ -112,6 +112,10 @@ export function ExpenseFilter({
                   value: 'standalone_incomplete',
                   label: 'Chi riêng — chưa xong thanh toán',
                 },
+                {
+                  value: 'deleted',
+                  label: 'Đã xóa',
+                },
               ]}
               value={scopeValue}
               onChange={(v) =>
@@ -123,8 +127,12 @@ export function ExpenseFilter({
                       'categoryId',
                       'isStandalone',
                       'paidByUserId',
+                      'includeDeleted',
+                      'deletedOnly',
                     ])
-                  : emit({ status: 'ACTIVE' }, ['standaloneIncomplete'])
+                  : v === 'deleted'
+                    ? emit({ includeDeleted: true, deletedOnly: true }, ['standaloneIncomplete', 'status'])
+                    : emit({ status: 'ACTIVE' }, ['standaloneIncomplete', 'includeDeleted', 'deletedOnly'])
               }
             />
           </Form.Item>

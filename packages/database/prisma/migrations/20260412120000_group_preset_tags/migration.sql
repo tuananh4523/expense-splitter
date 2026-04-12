@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Group" ADD COLUMN "presetTags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

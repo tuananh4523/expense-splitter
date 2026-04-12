@@ -1,3 +1,4 @@
+import { CategoryLabel } from '@/components/expenses/CategoryLabel'
 import {
   SplitConfig,
   type SplitConfigValue,
@@ -14,11 +15,10 @@ import {
   useExpense,
   useUpdateExpense,
 } from '@/hooks/useExpenses'
-import { useGroupMembers } from '@/hooks/useGroup'
+import { useGroup, useGroupMembers } from '@/hooks/useGroup'
 import type { CreateExpenseInput } from '@expense/types'
 import { createExpenseSchema, expenseTagsField, normalizeExpenseTags } from '@expense/types'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Icon } from '@iconify/react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   App,
@@ -100,7 +100,12 @@ export function ExpenseWizardForm({
   const { data: memberList, isLoading: loadingMembers } = useGroupMembers(groupId)
   const members = memberList?.members ?? []
   const selectableMembers = useMemo(() => members.filter((m) => m.isActive !== false), [members])
-  const { data: categories = [], isLoading: loadingCategories } = useCategories()
+  const { data: categories = [], isLoading: loadingCategories } = useCategories(groupId)
+  const { data: groupDetail } = useGroup(groupId)
+  const presetTagOptions = useMemo(
+    () => (groupDetail?.presetTags ?? []).map((t) => ({ value: t, label: t })),
+    [groupDetail?.presetTags],
+  )
   const create = useCreateExpense(groupId)
   const updateExpenseId = expenseId ?? '__none__'
   const update = useUpdateExpense(groupId, updateExpenseId)
@@ -122,10 +127,18 @@ export function ExpenseWizardForm({
   }, [mode, expense, selectableMembers])
 
   const categorySelectOptions = useMemo(() => {
-    const opts = categories.map((c) => ({ value: c.id, label: c.name }))
+    const opts = categories.map((c) => ({
+      value: c.id,
+      label: <CategoryLabel name={c.name} icon={c.icon} color={c.color} iconSize={16} />,
+    }))
     const ec = mode === 'edit' ? expense?.category : undefined
     if (ec && !opts.some((o) => o.value === ec.id)) {
-      opts.unshift({ value: ec.id, label: ec.name })
+      opts.unshift({
+        value: ec.id,
+        label: (
+          <CategoryLabel name={ec.name} icon={ec.icon} color={ec.color} iconSize={16} />
+        ),
+      })
     }
     return opts
   }, [mode, expense, categories])
@@ -561,30 +574,19 @@ export function ExpenseWizardForm({
                     <Select
                       allowClear
                       showSearch
-                      optionFilterProp="label"
+                      filterOption={(input, opt) => {
+                        const id = opt?.value as string
+                        const cat =
+                          categories.find((c) => c.id === id) ??
+                          (mode === 'edit' && expense?.category?.id === id
+                            ? expense.category
+                            : undefined)
+                        if (!cat) return false
+                        return cat.name.toLowerCase().includes(input.trim().toLowerCase())
+                      }}
                       placeholder={loadingCategories ? 'Đang tải danh mục…' : 'Chọn danh mục'}
                       loading={loadingCategories && categories.length === 0}
                       options={categorySelectOptions}
-                      optionRender={(opt) => {
-                        const cat =
-                          categories.find((c) => c.id === opt.value) ??
-                          (mode === 'edit' && expense?.category?.id === opt.value
-                            ? expense?.category
-                            : undefined)
-                        if (!cat) return opt.label
-                        return (
-                          <span className="flex items-center gap-2">
-                            {cat.icon ? (
-                              cat.icon.includes(':') ? (
-                                <Icon icon={cat.icon} width={16} />
-                              ) : (
-                                <span>{cat.icon}</span>
-                              )
-                            ) : null}
-                            {cat.name}
-                          </span>
-                        )
-                      }}
                       value={field.value || undefined}
                       onChange={(v) => field.onChange(v ?? '')}
                     />
@@ -601,6 +603,7 @@ export function ExpenseWizardForm({
                     <Select
                       mode="tags"
                       placeholder="Thêm thẻ"
+                      options={presetTagOptions}
                       value={field.value}
                       onChange={(v) => field.onChange(normalizeExpenseTags(v))}
                     />

@@ -7,6 +7,7 @@ import {
   inviteMemberSchema,
   rejectFundContributionSchema,
   updateGroupFundSchema,
+  updateGroupPresetTagsSchema,
   updateGroupSchema,
   updateMemberRoleSchema,
 } from '@expense/types'
@@ -146,6 +147,11 @@ function fundBalanceString(balance: unknown): string | null {
   return String(balance)
 }
 
+function fundLowThresholdString(fund: { lowThreshold: unknown } | null | undefined): string | null {
+  if (!fund) return null
+  return String(fund.lowThreshold)
+}
+
 async function toGroupDto(
   group: {
     id: string
@@ -161,11 +167,13 @@ async function toGroupDto(
     requireApproval: boolean
     debtReminderEnabled: boolean
     debtReminderDays: number
+    presetTags?: string[]
     createdAt: Date
   },
   myRole: string,
   memberCount: number,
   fundBalance: string | null,
+  fundLowThreshold: string | null,
   viewerUserId: string,
   extras?: { adminViewer?: boolean },
 ): Promise<GroupDto> {
@@ -186,7 +194,9 @@ async function toGroupDto(
     memberCount,
     myRole,
     fundBalance,
+    fundLowThreshold,
     createdAt: group.createdAt.toISOString(),
+    presetTags: group.presetTags ?? [],
     ...(extras?.adminViewer ? { adminViewer: true } : {}),
   }
 }
@@ -333,6 +343,7 @@ groupRoutes.get('/', async (c) => {
         row.role,
         row.group._count.members,
         row.group.fund ? fundBalanceString(row.group.fund.balance) : null,
+        fundLowThresholdString(row.group.fund),
         userId,
       ),
     ),
@@ -385,6 +396,7 @@ groupRoutes.post('/', async (c) => {
       'LEADER',
       group._count.members,
       group.fund ? fundBalanceString(group.fund.balance) : null,
+      fundLowThresholdString(group.fund),
       userId,
     ),
   })
@@ -503,6 +515,66 @@ groupRoutes.delete('/:groupId/categories/:categoryId', async (c) => {
 
   await prisma.category.delete({ where: { id: categoryId } })
   return c.json({ data: { ok: true } })
+})
+
+groupRoutes.put('/:groupId/preset-tags', async (c) => {
+  const groupId = c.req.param('groupId')
+  const userId = c.get('userId')
+  const w = await resolveGroupWriteAccess(c, groupId)
+  if (!w.ok) return w.response
+  if (w.m.role !== 'LEADER' && w.m.role !== 'VICE_LEADER') {
+    return c.json({ error: 'Chỉ trưởng nhóm hoặc phó nhóm có thể chỉnh thẻ gợi ý' }, 403)
+  }
+
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400)
+  }
+  const parsed = updateGroupPresetTagsSchema.safeParse(body)
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' }, 400)
+  }
+
+  const g = await prisma.group.update({
+    where: { id: groupId },
+    data: { presetTags: parsed.data.tags },
+    include: {
+      fund: true,
+      _count: { select: { members: { where: { ...activeMemberWhere } } } },
+    },
+  })
+
+  return c.json({
+    data: await toGroupDto(
+      g,
+      w.m.role,
+      g._count.members,
+      g.fund ? fundBalanceString(g.fund.balance) : null,
+      fundLowThresholdString(g.fund),
+      userId,
+    ),
+  })
+})
+
+/** Thẻ đã xuất hiện trên ít nhất một khoản chi (chưa xóa mềm) trong nhóm. */
+groupRoutes.get('/:groupId/used-tags', async (c) => {
+  const groupId = c.req.param('groupId')
+  const access = await resolveGroupReadAccess(c, groupId)
+  if (!access.ok) return access.response
+
+  const rows = await prisma.$queryRaw<{ tag: string }[]>`
+    SELECT DISTINCT TRIM(t) AS tag
+    FROM "Expense"
+    CROSS JOIN LATERAL unnest(COALESCE("tags", ARRAY[]::text[])) AS u(t)
+    WHERE "groupId" = ${groupId}
+      AND "deletedAt" IS NULL
+      AND TRIM(t) <> ''
+    ORDER BY tag ASC
+  `
+  const tags = rows.map((r) => r.tag).filter((s) => s.length > 0)
+  return c.json({ data: { tags } })
 })
 
 groupRoutes.get('/:groupId/activity-logs', async (c) => {
@@ -1514,6 +1586,7 @@ groupRoutes.post('/:groupId/invite/regenerate', async (c) => {
       membership?.role ?? 'MEMBER',
       g._count.members,
       g.fund ? fundBalanceString(g.fund.balance) : null,
+      fundLowThresholdString(g.fund),
       userId,
     ),
   })
@@ -1562,6 +1635,7 @@ groupRoutes.patch('/:groupId/invite/toggle', async (c) => {
       'LEADER',
       g._count.members,
       g.fund ? fundBalanceString(g.fund.balance) : null,
+      fundLowThresholdString(g.fund),
       userId,
     ),
   })
@@ -1634,6 +1708,7 @@ groupRoutes.patch('/:groupId', async (c) => {
       'LEADER',
       g._count.members,
       g.fund ? fundBalanceString(g.fund.balance) : null,
+      fundLowThresholdString(g.fund),
       userId,
     ),
   })
@@ -1687,6 +1762,7 @@ groupRoutes.get('/:groupId', async (c) => {
     myRole,
     group._count.members,
     group.fund ? fundBalanceString(group.fund.balance) : null,
+    fundLowThresholdString(group.fund),
     userId,
     adminViewer ? { adminViewer: true } : undefined,
   )

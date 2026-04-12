@@ -5,8 +5,7 @@ import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { NewExpenseDrawer } from '@/components/expenses/NewExpenseDrawer'
 import { StandalonePaymentModal } from '@/components/expenses/StandalonePaymentModal'
 import AppLayout from '@/components/layout/AppLayout'
-import { useExpenses } from '@/hooks/useExpenses'
-import { useDeleteExpense } from '@/hooks/useExpenses'
+import { useDeleteExpense, useExpenses, useRestoreExpense } from '@/hooks/useExpenses'
 import { withAuth } from '@/utils/withAuth'
 import { PlusOutlined } from '@ant-design/icons'
 import type { ExpenseFilterInput } from '@expense/types'
@@ -60,7 +59,24 @@ export default function GroupExpensesPage() {
     setStandaloneExpenseId(id)
     void router.replace(`/groups/${groupId}/expenses`, undefined, { shallow: true })
   }, [router.isReady, router.query.openStandalone, groupId, router])
+
+  useEffect(() => {
+    if (!router.isReady || !groupId) return
+    const q = router.query.deletedBin
+    if (q !== '1' && q !== 'true') return
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      includeDeleted: true,
+      deletedOnly: true,
+      standaloneIncomplete: undefined,
+      status: undefined,
+    }))
+    void router.replace(`/groups/${groupId}/expenses`, undefined, { shallow: true })
+  }, [router.isReady, router.query.deletedBin, groupId, router])
   const del = useDeleteExpense(groupId)
+  const restore = useRestoreExpense(groupId)
+  const isDeletedBinView = queryFilters.includeDeleted === true && queryFilters.deletedOnly === true
 
   if (!groupId) return null
 
@@ -72,7 +88,7 @@ export default function GroupExpensesPage() {
         </Button>
       </div>
       <div className="mb-4">
-        <ExpenseFilter value={filters} onChange={setFilters} />
+        <ExpenseFilter groupId={groupId} value={filters} onChange={setFilters} />
       </div>
       <ExpenseList
         groupId={groupId}
@@ -85,10 +101,19 @@ export default function GroupExpensesPage() {
         onRowOpen={(id) => setDrawerExpenseId(id)}
         onStandaloneOpen={(id) => setStandaloneExpenseId(id)}
         onEditOpen={(id) => setEditExpenseId(id)}
+        {...(isDeletedBinView ? { emptyDescription: 'Chưa có chi tiêu đã xóa' } : {})}
         onDeleteExpense={(id) =>
           void del
             .mutateAsync(id)
-            .then(() => message.success('Đã xoá chi tiêu'))
+            .then(() =>
+              message.success('Chi tiêu đã xóa (Phạm vi «Đã xóa») — có thể khôi phục trong 7 ngày'),
+            )
+            .catch((e: Error) => message.error(e.message))  
+        }
+        onRestoreExpense={(id) =>
+          void restore
+            .mutateAsync(id)
+            .then(() => message.success('Đã khôi phục chi tiêu'))
             .catch((e: Error) => message.error(e.message))
         }
       />
