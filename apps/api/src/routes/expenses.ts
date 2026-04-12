@@ -37,6 +37,7 @@ function standaloneAttentionForViewer(
   expense: {
     isStandalone: boolean
     status: string
+    deletedAt?: Date | null
     standalonePayment: {
       paymentRecords: { payerUserId: string; receiverUserId: string; status: string }[]
     } | null
@@ -44,6 +45,7 @@ function standaloneAttentionForViewer(
   viewerUserId: string,
   memberRole: string,
 ): boolean {
+  if (expense.deletedAt) return false
   if (!expense.isStandalone || expense.status === 'STANDALONE_DONE') return false
   const recs = expense.standalonePayment?.paymentRecords ?? []
   if (recs.length === 0) return false
@@ -72,7 +74,9 @@ function toExpenseDto(
     tags: string[]
     imageUrls: string[]
     createdAt: Date
-    category: { id: string; name: string; icon: string | null } | null
+    deletedAt?: Date | null
+    deletedBy?: { id: string; name: string; avatarUrl: string | null } | null
+    category: { id: string; name: string; icon: string | null; color: string | null } | null
     paidBy: { id: string; name: string; avatarUrl: string | null }
     splits: Array<{
       userId: string
@@ -100,7 +104,12 @@ function toExpenseDto(
     tags: e.tags,
     imageUrls: e.imageUrls,
     category: e.category
-      ? { id: e.category.id, name: e.category.name, icon: e.category.icon }
+      ? {
+          id: e.category.id,
+          name: e.category.name,
+          icon: e.category.icon,
+          color: e.category.color,
+        }
       : null,
     paidBy: {
       id: e.paidBy.id,
@@ -127,6 +136,14 @@ function toExpenseDto(
     })),
     commentCount: e._count?.comments ?? 0,
     createdAt: e.createdAt.toISOString(),
+    deletedAt: e.deletedAt ? e.deletedAt.toISOString() : null,
+    deletedBy: e.deletedBy
+      ? {
+          id: e.deletedBy.id,
+          name: e.deletedBy.name,
+          avatarUrl: e.deletedBy.avatarUrl,
+        }
+      : null,
   }
 }
 
@@ -146,10 +163,16 @@ async function toExpenseDtoWithSignedAvatars(
     const url = await signedStorageUrlForUser(extra.createdBy.avatarUrl, viewerUserId)
     createdByOut = { ...dto.createdBy, avatarUrl: url }
   }
+  let deletedByOut: NonNullable<ExpenseDto['deletedBy']> | null = dto.deletedBy ?? null
+  if (dto.deletedBy != null && e.deletedBy != null) {
+    const url = await signedStorageUrlForUser(e.deletedBy.avatarUrl, viewerUserId)
+    deletedByOut = { ...dto.deletedBy, avatarUrl: url }
+  }
   return {
     ...dto,
     paidBy: { ...dto.paidBy, avatarUrl: paidByUrl },
     createdBy: createdByOut,
+    deletedBy: deletedByOut,
     splits: dto.splits.map((s, i) => ({
       ...s,
       user: { ...s.user, avatarUrl: splitUrls[i] ?? null },
@@ -278,11 +301,14 @@ groupExpenseRoutes.get('/', async (c) => {
     standaloneIncomplete,
     settlementId: filterSettlementId,
     includeDeleted,
+    deletedOnly,
   } = q.data
   const where: Prisma.ExpenseWhereInput = { groupId }
-  // Default: hide soft-deleted expenses (admin can opt in).
-  if (!(adminBrowse && includeDeleted)) {
+  const canListDeleted = Boolean(includeDeleted) && (Boolean(m) || adminBrowse)
+  if (!canListDeleted) {
     where.deletedAt = null
+  } else if (deletedOnly) {
+    where.deletedAt = { not: null }
   }
   const dateFilter: Prisma.DateTimeFilter = {}
   if (dateFrom) dateFilter.gte = new Date(dateFrom)
@@ -309,6 +335,7 @@ groupExpenseRoutes.get('/', async (c) => {
         splits: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
         category: true,
         paidBy: { select: { id: true, name: true, avatarUrl: true } },
+        deletedBy: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { comments: true } },
         standalonePayment: {
           select: {

@@ -77,14 +77,16 @@ export async function syncCachesAfterExpenseUpdate(
     refetchType: 'all',
   })
   await qc.invalidateQueries({ queryKey: groupKeys.detail(groupId), refetchType: 'all' })
+  await qc.invalidateQueries({ queryKey: groupKeys.usedTags(groupId), refetchType: 'all' })
   await qc.invalidateQueries({ queryKey: ['standalone', groupId, expenseId], refetchType: 'all' })
 }
 
-export const useCategories = () =>
+export const useCategories = (groupId?: string) =>
   useQuery({
-    queryKey: ['categories'],
-    queryFn: () =>
-      api
+    queryKey: ['categories', groupId ?? ''],
+    queryFn: () => {
+      const q = groupId ? `?groupId=${encodeURIComponent(groupId)}` : ''
+      return api
         .get<{
           data: {
             id: string
@@ -93,8 +95,9 @@ export const useCategories = () =>
             color: string | null
             isSystem: boolean
           }[]
-        }>('/categories')
-        .then((r) => r.data.data),
+        }>(`/categories${q}`)
+        .then((r) => r.data.data)
+    },
   })
 
 /** Gửi query chuỗi rõ ràng — tránh client/axios làm mất cờ boolean. */
@@ -112,6 +115,7 @@ function expenseListQueryParams(
   if (filters.status) out.status = filters.status
   if (filters.includeDeleted === true) out.includeDeleted = 'true'
   if (filters.includeDeleted === false) out.includeDeleted = 'false'
+  if (filters.deletedOnly === true) out.deletedOnly = 'true'
   if (filters.isStandalone === true) out.isStandalone = 'true'
   if (filters.isStandalone === false) out.isStandalone = 'false'
   if (filters.standaloneIncomplete === true) out.standaloneIncomplete = 'true'
@@ -150,6 +154,7 @@ export const useCreateExpense = (groupId: string) => {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: expenseKeys.all(groupId), refetchType: 'all' })
       await qc.invalidateQueries({ queryKey: groupKeys.detail(groupId), refetchType: 'all' })
+      await qc.invalidateQueries({ queryKey: groupKeys.usedTags(groupId), refetchType: 'all' })
     },
   })
 }
@@ -169,6 +174,7 @@ export const useDeleteExpense = (groupId: string) => {
     mutationFn: (expenseId: string) => api.delete(`/groups/${groupId}/expenses/${expenseId}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: expenseKeys.all(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.usedTags(groupId) })
       void router.push(`/groups/${groupId}/expenses`)
     },
   })
@@ -182,6 +188,8 @@ export const useRestoreExpense = (groupId: string) => {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: expenseKeys.all(groupId) })
       void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
+      void qc.invalidateQueries({ queryKey: groupKeys.usedTags(groupId) })
+      void qc.invalidateQueries({ queryKey: notificationKeys.all })
     },
   })
 }

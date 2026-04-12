@@ -5,6 +5,7 @@ import { useExpenses } from '@/hooks/useExpenses'
 import { useGroup, useGroupMembers } from '@/hooks/useGroup'
 import { useSettlements } from '@/hooks/useSettlement'
 import { formatVND } from '@/utils/currency'
+import { isGroupFundAtOrBelowWarning } from '@/utils/fundLowWarning'
 import { withAuth } from '@/utils/withAuth'
 import { Icon } from '@iconify/react'
 import { Col, Row, Space, Tag, Typography } from 'antd'
@@ -20,6 +21,10 @@ type OverviewStat = {
   color: string
   bg: string
   action?: { label: string; onClick: () => void }
+  /** Màu chữ số liệu chính (vd. quỹ cảnh báo) */
+  valueTextClass?: string
+  /** Viền thẻ (vd. quỹ thấp) */
+  cardBorderClass?: string
 }
 
 const standalonePendingFilters = { standaloneIncomplete: true as const, page: 1, limit: 1 }
@@ -68,14 +73,88 @@ export default function GroupHomePage() {
   const showUnsettled =
     !group?.adminViewer && group?.myUnsettledDebt != null && group?.myUnsettledCredit != null
 
-  if (!groupId) return null
+  const thisMonthTotal = thisMonthData?.data.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0
+  const thisMonthCount = thisMonthData?.total ?? 0
 
   const pendingSettlements = settlements.filter(
     (s) => s.status === 'PENDING' || s.status === 'DRAFT',
   )
   const completedSettlements = settlements.filter((s) => s.status === 'COMPLETED')
-  const thisMonthTotal = thisMonthData?.data.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0
-  const thisMonthCount = thisMonthData?.total ?? 0
+
+  const overviewStats = useMemo((): OverviewStat[] => {
+    if (!group) return []
+    const fundLowWarning = isGroupFundAtOrBelowWarning(group.fundBalance, group.fundLowThreshold)
+    return [
+      {
+        label: 'Thành viên',
+        value: members.length,
+        sub: `${members.filter((m) => m.role === 'LEADER' || m.role === 'VICE_LEADER').length} quản lý`,
+        icon: 'mdi:account-multiple',
+        color: '#005A87',
+        bg: '#E5F4FA',
+      },
+      {
+        label: 'Chi tiêu tháng này',
+        value: <CurrencyDisplay amount={String(thisMonthTotal)} />,
+        sub: `${thisMonthCount} khoản`,
+        icon: 'mdi:cash-multiple',
+        color: '#0073AA',
+        bg: '#E5F4FA',
+      },
+      {
+        label: 'Quỹ nhóm',
+        value:
+          group.fundBalance != null ? <CurrencyDisplay amount={group.fundBalance} /> : '—',
+        sub: fundLowWarning
+          ? 'Đã chạm hoặc thấp hơn ngưỡng cảnh báo quỹ'
+          : 'Số dư hiện tại',
+        icon: 'mdi:bank-outline',
+        color: fundLowWarning ? '#cf1322' : '#00A32A',
+        bg: fundLowWarning ? '#fff1f0' : '#EDFAEF',
+        ...(fundLowWarning
+          ? { valueTextClass: 'text-[#cf1322]', cardBorderClass: 'border-red-200' }
+          : {}),
+      },
+      {
+        label: 'Đang nợ (ước tính)',
+        value: showUnsettled ? (
+          <UnsettledStatValue amount={group.myUnsettledDebt!} kind="debt" />
+        ) : (
+          <span className="text-2xl font-bold tabular-nums text-stone-400">—</span>
+        ),
+        sub: showUnsettled
+          ? 'Đã trả + quỹ − phần chia (khoản chung)'
+          : 'Chỉ tính khi bạn là thành viên nhóm',
+        icon: 'mdi:trending-down',
+        color: '#b32d00',
+        bg: '#fce8e8',
+      },
+      {
+        label: 'Được nợ (ước tính)',
+        value: showUnsettled ? (
+          <UnsettledStatValue amount={group.myUnsettledCredit!} kind="credit" />
+        ) : (
+          <span className="text-2xl font-bold tabular-nums text-stone-400">—</span>
+        ),
+        sub: showUnsettled
+          ? 'Đã trả + quỹ − phần chia (khoản chung)'
+          : 'Chỉ tính khi bạn là thành viên nhóm',
+        icon: 'mdi:trending-up',
+        color: '#00A32A',
+        bg: '#EDFAEF',
+      },
+      {
+        label: 'Tổng kết đang chờ',
+        value: pendingSettlements.length,
+        sub: `${completedSettlements.length} đã hoàn thành`,
+        icon: 'mdi:clipboard-clock-outline',
+        color: '#D54E21',
+        bg: '#FCF9E8',
+      },
+    ]
+  }, [group, members, thisMonthTotal, thisMonthCount, showUnsettled, settlements])
+
+  if (!groupId) return null
 
   return (
     <AppLayout title="Tổng quan">
@@ -117,77 +196,11 @@ export default function GroupHomePage() {
 
           {/* Stat cards */}
           <Row gutter={[16, 16]} className="mb-6">
-            {(
-              [
-                {
-                  label: 'Thành viên',
-                  value: members.length,
-                  sub: `${members.filter((m) => m.role === 'LEADER' || m.role === 'VICE_LEADER').length} quản lý`,
-                  icon: 'mdi:account-multiple',
-                  color: '#005A87',
-                  bg: '#E5F4FA',
-                },
-                {
-                  label: 'Chi tiêu tháng này',
-                  value: <CurrencyDisplay amount={String(thisMonthTotal)} />,
-                  sub: `${thisMonthCount} khoản`,
-                  icon: 'mdi:cash-multiple',
-                  color: '#0073AA',
-                  bg: '#E5F4FA',
-                },
-                {
-                  label: 'Quỹ nhóm',
-                  value:
-                    group.fundBalance != null ? (
-                      <CurrencyDisplay amount={group.fundBalance} />
-                    ) : (
-                      '—'
-                    ),
-                  sub: 'Số dư hiện tại',
-                  icon: 'mdi:bank-outline',
-                  color: '#00A32A',
-                  bg: '#EDFAEF',
-                },
-                {
-                  label: 'Đang nợ (ước tính)',
-                  value: showUnsettled ? (
-                    <UnsettledStatValue amount={group.myUnsettledDebt!} kind="debt" />
-                  ) : (
-                    <span className="text-2xl font-bold tabular-nums text-stone-400">—</span>
-                  ),
-                  sub: showUnsettled
-                    ? 'Đã trả + quỹ − phần chia (khoản chung)'
-                    : 'Chỉ tính khi bạn là thành viên nhóm',
-                  icon: 'mdi:trending-down',
-                  color: '#b32d00',
-                  bg: '#fce8e8',
-                },
-                {
-                  label: 'Được nợ (ước tính)',
-                  value: showUnsettled ? (
-                    <UnsettledStatValue amount={group.myUnsettledCredit!} kind="credit" />
-                  ) : (
-                    <span className="text-2xl font-bold tabular-nums text-stone-400">—</span>
-                  ),
-                  sub: showUnsettled
-                    ? 'Đã trả + quỹ − phần chia (khoản chung)'
-                    : 'Chỉ tính khi bạn là thành viên nhóm',
-                  icon: 'mdi:trending-up',
-                  color: '#00A32A',
-                  bg: '#EDFAEF',
-                },
-                {
-                  label: 'Tổng kết đang chờ',
-                  value: pendingSettlements.length,
-                  sub: `${completedSettlements.length} đã hoàn thành`,
-                  icon: 'mdi:clipboard-clock-outline',
-                  color: '#D54E21',
-                  bg: '#FCF9E8',
-                },
-              ] satisfies OverviewStat[]
-            ).map((s: OverviewStat) => (
+            {overviewStats.map((s: OverviewStat) => (
               <Col xs={24} sm={12} lg={8} key={s.label}>
-                <div className="flex items-center gap-4 rounded-xl border border-stone-300 bg-white px-5 py-4 shadow-sm">
+                <div
+                  className={`flex items-center gap-4 rounded-xl border bg-white px-5 py-4 shadow-sm ${s.cardBorderClass ?? 'border-stone-300'}`}
+                >
                   <div
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
                     style={{ background: s.bg }}
@@ -196,7 +209,11 @@ export default function GroupHomePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-stone-500">{s.label}</div>
-                    <div className="text-2xl font-bold text-stone-900">{s.value}</div>
+                    <div
+                      className={`text-2xl font-bold tabular-nums ${s.valueTextClass ?? 'text-stone-900'}`}
+                    >
+                      {s.value}
+                    </div>
                     <div className="text-xs text-stone-400">{s.sub}</div>
                     {s.action ? (
                       <button

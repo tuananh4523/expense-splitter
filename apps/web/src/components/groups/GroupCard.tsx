@@ -1,5 +1,6 @@
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { fmtDate } from '@/utils/date'
+import { isGroupFundAtOrBelowWarning } from '@/utils/fundLowWarning'
 import { BankOutlined, TeamOutlined } from '@ant-design/icons'
 import type { GroupDto } from '@expense/types'
 import { Icon } from '@iconify/react'
@@ -46,6 +47,7 @@ const roleLabel: Record<string, string> = {
 
 export function GroupCard({ group }: { group: GroupDto }) {
   const router = useRouter()
+  const fundLowWarning = isGroupFundAtOrBelowWarning(group.fundBalance, group.fundLowThreshold)
   return (
     <Card
       hoverable
@@ -64,10 +66,13 @@ export function GroupCard({ group }: { group: GroupDto }) {
           </div>
           <div className="mt-auto flex flex-col gap-1 border-t border-stone-100 pt-3">
             <div className="flex items-center gap-2 text-sm text-stone-600">
-              <BankOutlined className="text-stone-400" />
+              <BankOutlined className={fundLowWarning ? 'text-[#cf1322]' : 'text-stone-400'} />
               <span>Quỹ:</span>
               {group.fundBalance != null ? (
-                <CurrencyDisplay amount={group.fundBalance} />
+                <CurrencyDisplay
+                  amount={group.fundBalance}
+                  {...(fundLowWarning ? { className: 'font-medium text-[#cf1322]' } : {})}
+                />
               ) : (
                 <Typography.Text type="secondary">—</Typography.Text>
               )}

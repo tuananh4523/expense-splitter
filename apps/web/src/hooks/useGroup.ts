@@ -19,6 +19,7 @@ export const groupKeys = {
   members: (id: string) => [...groupKeys.all, 'members', id] as const,
   activityLogs: (id: string, filters: Partial<GroupActivityLogFilterInput>) =>
     [...groupKeys.all, 'activity', id, filters] as const,
+  usedTags: (id: string) => [...groupKeys.all, 'used-tags', id] as const,
 }
 
 function activityLogQueryParams(
@@ -50,6 +51,14 @@ export const useGroup = (groupId: string | undefined, opts?: { enabled?: boolean
     queryKey: groupKeys.detail(groupId ?? ''),
     queryFn: () => api.get<{ data: GroupDto }>(`/groups/${groupId}`).then((r) => r.data.data),
     enabled: Boolean(groupId) && opts?.enabled !== false,
+  })
+
+export const useGroupUsedTags = (groupId: string | undefined) =>
+  useQuery({
+    queryKey: groupKeys.usedTags(groupId ?? ''),
+    queryFn: () =>
+      api.get<{ data: { tags: string[] } }>(`/groups/${groupId}/used-tags`).then((r) => r.data.data.tags),
+    enabled: Boolean(groupId),
   })
 
 export const useCreateGroup = () => {
@@ -169,6 +178,63 @@ export const useUpdateGroup = (groupId: string) => {
       qc.setQueryData(groupKeys.detail(groupId), data)
       void qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) })
       void qc.invalidateQueries({ queryKey: groupKeys.lists() })
+    },
+  })
+}
+
+export const useUpdateGroupPresetTags = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (tags: string[]) =>
+      api.put<{ data: GroupDto }>(`/groups/${groupId}/preset-tags`, { tags }).then((r) => r.data.data),
+    onSuccess: (data) => {
+      qc.setQueryData(groupKeys.detail(groupId), data)
+      void qc.invalidateQueries({ queryKey: groupKeys.lists() })
+    },
+  })
+}
+
+type GroupCategoryInput = { name: string; icon?: string | null; color?: string | null }
+
+export const useCreateGroupCategory = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: GroupCategoryInput) =>
+      api.post<{ data: { id: string; name: string; icon: string | null; color: string | null } }>(
+        `/groups/${groupId}/categories`,
+        body,
+      ).then((r) => r.data.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['categories'] })
+    },
+  })
+}
+
+export const useUpdateGroupCategory = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (p: { categoryId: string } & Partial<GroupCategoryInput>) => {
+      const { categoryId, ...rest } = p
+      return api
+        .put<{ data: { id: string; name: string; icon: string | null; color: string | null } }>(
+          `/groups/${groupId}/categories/${categoryId}`,
+          rest,
+        )
+        .then((r) => r.data.data)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['categories'] })
+    },
+  })
+}
+
+export const useDeleteGroupCategory = (groupId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (categoryId: string) =>
+      api.delete(`/groups/${groupId}/categories/${categoryId}`).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['categories'] })
     },
   })
 }

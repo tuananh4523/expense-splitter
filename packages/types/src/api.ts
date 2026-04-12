@@ -48,6 +48,8 @@ export interface GroupDto {
   memberCount: number
   myRole: string
   fundBalance: string | null
+  /** Ngưỡng cảnh báo quỹ thấp (cùng nguồn với trang Quỹ); null khi chưa có quỹ. */
+  fundLowThreshold: string | null
   createdAt: string
   /** true khi quản trị viên xem nhóm nhưng không phải thành viên (chỉ đọc). */
   adminViewer?: boolean
@@ -55,6 +57,8 @@ export interface GroupDto {
   myUnsettledDebt?: string
   /** Cùng công thức (dương). Chỉ khi là thành viên; không gửi khi adminViewer. */
   myUnsettledCredit?: string
+  /** Thẻ gợi ý do trưởng/phó nhóm cấu hình (mặc định []). */
+  presetTags?: string[]
 }
 
 export interface MemberDto {
@@ -138,7 +142,7 @@ export interface ExpenseDto {
   expenseDate: string
   tags: string[]
   imageUrls: string[]
-  category: { id: string; name: string; icon: string | null } | null
+  category: { id: string; name: string; icon: string | null; color: string | null } | null
   paidBy: Pick<UserDto, 'id' | 'name' | 'avatarUrl'>
   /** Người tạo bản ghi (audit EXPENSE_CREATED); null nếu không còn lịch sử. */
   createdBy: Pick<UserDto, 'id' | 'name' | 'avatarUrl'> | null
@@ -149,6 +153,9 @@ export interface ExpenseDto {
   settlementId: string | null
   /** Danh sách: user hiện tại còn việc với thanh toán riêng (chưa ACCEPTED / cần duyệt) */
   standaloneAttention?: boolean
+  /** Xoá mềm — có khi gọi API với includeDeleted */
+  deletedAt?: string | null
+  deletedBy?: Pick<UserDto, 'id' | 'name' | 'avatarUrl'> | null
 }
 
 export interface CommentDto {
