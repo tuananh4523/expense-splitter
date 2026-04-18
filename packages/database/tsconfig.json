@@ -2,7 +2,9 @@
   "extends": "@expense/config/tsconfig/node",
   "compilerOptions": {
     "noEmit": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["node"],
+    "lib": ["ES2020"]
   },
   "include": ["src", "prisma"]
 }
