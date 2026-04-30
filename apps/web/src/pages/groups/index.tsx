@@ -7,7 +7,7 @@ import { useDashboardSummary } from '@/hooks/useDashboard'
 import { useGroups } from '@/hooks/useGroup'
 import { withAuth } from '@/utils/withAuth'
 import type { GroupDto } from '@expense/types'
-import { Alert, Button, Col, Row, Spin, Typography } from 'antd'
+import { Alert, Button, Col, Input, Row, Spin, Typography } from 'antd'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -29,6 +29,7 @@ function parseGroupsFilter(query: Record<string, string | string[] | undefined>)
 export default function GroupsPage() {
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
+  const [q, setQ] = useState('')
   const { data: groups, isLoading: loadingGroups } = useGroups()
   const { data: summary, isLoading: loadingSummary, isError: summaryError } = useDashboardSummary()
 
@@ -51,6 +52,15 @@ export default function GroupsPage() {
     return arr.filter((g) => allowedGroupIds.has(g.id))
   }
 
+  const matchesSearch = (g: GroupDto) => {
+    const s = q.trim().toLowerCase()
+    if (!s) return true
+    const name = (g.name ?? '').toLowerCase()
+    if (name.includes(s)) return true
+    const memberNames = (((g as unknown) as { memberNames?: string[] }).memberNames ?? []) as string[]
+    return memberNames.some((n) => (n ?? '').toLowerCase().includes(s))
+  }
+
   const { led, joined } = useMemo(() => {
     const list = groups ?? []
     return {
@@ -59,8 +69,14 @@ export default function GroupsPage() {
     }
   }, [groups])
 
-  const ledFiltered = useMemo(() => applyListFilter(led), [led, allowedGroupIds])
-  const joinedFiltered = useMemo(() => applyListFilter(joined), [joined, allowedGroupIds])
+  const ledFiltered = useMemo(
+    () => applyListFilter(led).filter(matchesSearch),
+    [led, allowedGroupIds, q],
+  )
+  const joinedFiltered = useMemo(
+    () => applyListFilter(joined).filter(matchesSearch),
+    [joined, allowedGroupIds, q],
+  )
 
   const filterCallout =
     listFilter === 'owe'
@@ -100,7 +116,15 @@ export default function GroupsPage() {
   return (
     <AppLayout title="Nhóm của tôi">
       <CreateGroupModal open={createOpen} onCancel={() => setCreateOpen(false)} />
-      <div className="mb-6 flex items-center justify-end">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Input
+          allowClear
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm theo tên nhóm hoặc tên thành viên"
+          className="max-w-[520px] rounded-full"
+          size="large"
+        />
         <Button type="primary" onClick={() => setCreateOpen(true)}>
           Tạo nhóm mới
         </Button>
@@ -136,6 +160,11 @@ export default function GroupsPage() {
         </div>
       ) : (
         <>
+          {q.trim() &&
+          (ledFiltered.length > 0 || joinedFiltered.length > 0) === false ? (
+            <EmptyState className="mb-8" description="Không tìm thấy nhóm nào khớp tìm kiếm." />
+          ) : null}
+
           {filterInEffect &&
           allowedGroupIds &&
           (groups?.length ?? 0) > 0 &&

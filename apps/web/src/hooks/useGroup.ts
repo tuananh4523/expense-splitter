@@ -173,6 +173,7 @@ export const useUpdateGroup = (groupId: string) => {
       requireApproval?: boolean
       debtReminderEnabled?: boolean
       debtReminderDays?: number
+      debtReminderMessage?: string | null
     }) => api.patch<{ data: GroupDto }>(`/groups/${groupId}`, data).then((r) => r.data.data),
     onSuccess: (data) => {
       qc.setQueryData(groupKeys.detail(groupId), data)

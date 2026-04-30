@@ -59,6 +59,8 @@ export interface GroupDto {
   myUnsettledCredit?: string
   /** Thẻ gợi ý do trưởng/phó nhóm cấu hình (mặc định []). */
   presetTags?: string[]
+  /** Danh sách tên thành viên (để tìm kiếm nhanh trên trang nhóm). */
+  memberNames?: string[]
 }
 
 export interface MemberDto {

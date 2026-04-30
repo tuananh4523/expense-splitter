@@ -50,6 +50,14 @@ export function ExpenseCharts() {
     }))
   }, [data])
 
+  const totalAmount = useMemo(() => {
+    return formattedLineData.reduce((sum, item) => sum + (Number.isFinite(item.amountNum) ? item.amountNum : 0), 0)
+  }, [formattedLineData])
+
+  const totalAmountFormatted = useMemo(() => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)
+  }, [totalAmount])
+
   const formattedPieData = useMemo(() => {
     if (!data?.pieChartData) return []
     return data.pieChartData
@@ -60,9 +68,14 @@ export function ExpenseCharts() {
   return (
     <Card className="mb-8" styles={{ body: { padding: '20px 24px' } }}>
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <Typography.Title level={5} className="!m-0">
-          Chi tiêu cá nhân
-        </Typography.Title>
+        <div className="flex flex-col gap-1">
+          <Typography.Title level={5} className="!m-0">
+            Chi tiêu cá nhân
+          </Typography.Title>
+          <Typography.Text type="secondary" className="text-xs">
+            Tổng: <span className="font-semibold text-slate-700">{totalAmountFormatted}</span>
+          </Typography.Text>
+        </div>
         <RangePicker
           presets={rangePresets}
           value={dates}

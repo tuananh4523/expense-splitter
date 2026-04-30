@@ -14,6 +14,7 @@ import type {
   SettlementPreviewExpenseItem,
   SettlementSummary,
 } from '@expense/types'
+import dayjs from 'dayjs'
 import { Hono } from 'hono'
 import { clearGroupFundLedger } from '../lib/clear-group-fund.js'
 import { formatVndForSummary } from '../lib/format-vnd.js'
@@ -238,6 +239,94 @@ groupSettlementRoutes.post('/preview', async (c) => {
     expenses: preview.expenses,
   }
   return c.json({ data })
+})
+
+groupSettlementRoutes.get('/member-totals', async (c) => {
+  const viewerUserId = c.get('userId')
+  const groupId = c.get('groupId')
+  const m = c.get('groupMember')
+  const adminBrowse = c.get('adminGroupBrowse')
+  if (!m && !adminBrowse) return c.json({ error: 'Không tìm thấy nhóm' }, 404)
+
+  const { startDate, endDate } = c.req.query()
+
+  const end = endDate ? dayjs(endDate).endOf('day') : dayjs().endOf('day')
+  const start = startDate ? dayjs(startDate).startOf('day') : end.clone().subtract(30, 'day').startOf('day')
+
+  const members = await prisma.groupMember.findMany({
+    where: { groupId, ...activeMemberWhere, user: { isActive: true } },
+    select: { userId: true, user: { select: { id: true, name: true, avatarUrl: true } } },
+  })
+
+  // debt: phần chia (người đó phải chịu) theo expenseSplit
+  const debtSums = await prisma.expenseSplit.groupBy({
+    by: ['userId'],
+    where: {
+      isExcluded: false,
+      userId: { in: members.map((x) => x.userId) },
+      expense: {
+        groupId,
+        expenseDate: { gte: start.toDate(), lte: end.toDate() },
+        status: 'ACTIVE',
+      },
+    },
+    _sum: { amount: true },
+  })
+
+  const debtByUserId = new Map<string, Prisma.Decimal>()
+  for (const row of debtSums) {
+    if (row._sum.amount) debtByUserId.set(row.userId, row._sum.amount)
+  }
+
+  // paid: tổng tiền người đó đã trả (expense.amount theo paidByUserId)
+  const paidSums = await prisma.expense.groupBy({
+    by: ['paidByUserId'],
+    where: {
+      groupId,
+      deletedAt: null,
+      status: 'ACTIVE',
+      expenseDate: { gte: start.toDate(), lte: end.toDate() },
+      paidByUserId: { in: members.map((x) => x.userId) },
+    },
+    _sum: { amount: true },
+  })
+
+  const paidByUserId = new Map<string, Prisma.Decimal>()
+  for (const row of paidSums) {
+    if (row._sum.amount) paidByUserId.set(row.paidByUserId, row._sum.amount)
+  }
+
+  const data = await Promise.all(
+    members.map(async (x) => {
+      const paid = paidByUserId.get(x.userId) ?? new Prisma.Decimal(0)
+      const debt = debtByUserId.get(x.userId) ?? new Prisma.Decimal(0)
+      const avatarUrl = x.user.avatarUrl
+        ? await signedStorageUrlForUser(x.user.avatarUrl, viewerUserId)
+        : null
+      return {
+        userId: x.userId,
+        name: x.user.name,
+        avatarUrl,
+        paid: paid.toFixed(2),
+        debt: debt.toFixed(2),
+      }
+    }),
+  )
+
+  data.sort(
+    (a, b) =>
+      Number.parseFloat(b.paid) +
+      Number.parseFloat(b.debt) -
+      (Number.parseFloat(a.paid) + Number.parseFloat(a.debt)),
+  )
+
+  return c.json({
+    data: {
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      members: data,
+    },
+  })
 })
 
 groupSettlementRoutes.get('/', async (c) => {

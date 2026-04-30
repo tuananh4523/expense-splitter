@@ -56,7 +56,7 @@ export default function DashboardPage() {
         <Col xs={24} sm={12} lg={6}>
           <OverviewHighlightCard
             variant="rose"
-            title="Đang nợ (ước tính)"
+            title="Nợ (ước tính)"
             description="Đã trả + quỹ − phần chia (âm = đang nợ). Mở nhóm để xem chi tiết."
             icon="mdi:trending-down"
             href={hrefDebtGroups}
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <Col xs={24} sm={12} lg={6}>
           <OverviewHighlightCard
             variant="emerald"
-            title="Được nợ (ước tính)"
+            title="Được nhận (ước tính)"
             description="Đã trả + quỹ − phần chia (dương = được nợ). Mở nhóm để xem chi tiết."
             icon="mdi:trending-up"
             href={hrefCreditGroups}
@@ -82,7 +82,7 @@ export default function DashboardPage() {
         <Col xs={24} sm={12} lg={6}>
           <OverviewHighlightCard
             variant="amber"
-            title="Tổng kết đang chờ"
+            title="Tổng kết cần xử lý"
             description={
               pending > 0
                 ? `${pending} đợt trên các nhóm — bấm để chỉ xem nhóm có tổng kết đang chờ, rồi vào nhóm → Tổng kết.`

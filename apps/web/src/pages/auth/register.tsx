@@ -117,7 +117,7 @@ export default function RegisterPage() {
                     {...field}
                     id="reg-name"
                     size="large"
-                    placeholder="Đỗ Văn Cường"
+                    placeholder="Nguyễn Văn Tuấn Anh"
                     prefix={<Icon icon="fluent:person-20-regular" color={iconMuted} width={18} />}
                     status={formState.errors.name ? 'error' : ''}
                     autoComplete="name"

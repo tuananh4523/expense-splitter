@@ -23,7 +23,7 @@ export const APP_VERSION = String(pkg.version ?? '').trim() || '0.0.0'
 export const APP_AUTHOR =
   typeof webPkg.author === 'string' && webPkg.author.trim() !== ''
     ? webPkg.author.trim()
-    : 'Đỗ Văn Cường'
+    : 'Nguyễn Văn Tuấn Anh'
 
 const ghId = webPkg.authorSocial?.github?.trim() || 'tuananh4523'
 const liId = webPkg.authorSocial?.linkedin?.trim() || 'tuananh4523'

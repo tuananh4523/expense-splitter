@@ -2,6 +2,24 @@ import { prisma } from '@expense/database'
 import dayjs from 'dayjs'
 import { getIo } from '../realtime/socket.js'
 
+function renderDebtReminderTemplate(
+  template: string | null | undefined,
+  ctx: { expenseTitle: string; amount: string; currency: string; days: number; groupName: string },
+): string {
+  const raw = (template ?? '').trim()
+  if (!raw) {
+    return `Khoản chi "${ctx.expenseTitle}" (${ctx.amount} ${ctx.currency}) đã quá hạn thanh toán ${ctx.days} ngày. Vui lòng thanh toán sớm!`
+  }
+  // Simple token replacement; keep it predictable & safe.
+  return raw
+    .replaceAll('{{expenseTitle}}', ctx.expenseTitle)
+    .replaceAll('{{amount}}', ctx.amount)
+    .replaceAll('{{currency}}', ctx.currency)
+    .replaceAll('{{days}}', String(ctx.days))
+    .replaceAll('{{groupName}}', ctx.groupName)
+    .slice(0, 2000)
+}
+
 export async function processDebtReminders() {
   const now = dayjs()
 

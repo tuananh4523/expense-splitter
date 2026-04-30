@@ -3,15 +3,17 @@ import AppLayout from '@/components/layout/AppLayout'
 import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useGroup, useGroupMembers } from '@/hooks/useGroup'
-import { useSettlements } from '@/hooks/useSettlement'
+import { useSettlementMemberTotals, useSettlements } from '@/hooks/useSettlement'
 import { formatVND } from '@/utils/currency'
 import { isGroupFundAtOrBelowWarning } from '@/utils/fundLowWarning'
 import { withAuth } from '@/utils/withAuth'
 import { Icon } from '@iconify/react'
-import { Col, Row, Space, Tag, Typography } from 'antd'
+import { Card, Col, DatePicker, Empty, Row, Skeleton, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { useRouter } from 'next/router'
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip as ReTooltip, XAxis, YAxis } from 'recharts'
 
 type OverviewStat = {
   label: string
@@ -29,6 +31,23 @@ type OverviewStat = {
 
 const standalonePendingFilters = { standaloneIncomplete: true as const, page: 1, limit: 1 }
 
+const { RangePicker } = DatePicker
+
+const defaultRange: [Dayjs, Dayjs] = [dayjs().subtract(30, 'd'), dayjs()]
+
+const rangePresets = [
+  { label: '30 ngày qua', value: defaultRange },
+  { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs] },
+  {
+    label: 'Tháng trước',
+    value: [
+      dayjs().subtract(1, 'month').startOf('month'),
+      dayjs().subtract(1, 'month').endOf('month'),
+    ] as [Dayjs, Dayjs],
+  },
+  { label: 'Năm nay', value: [dayjs().startOf('year'), dayjs().endOf('year')] as [Dayjs, Dayjs] },
+]
+
 function UnsettledStatValue({ amount, kind }: { amount: string; kind: 'debt' | 'credit' }) {
   const d = Number.parseFloat(amount)
   const cls = 'text-2xl font-bold tabular-nums'
@@ -38,6 +57,45 @@ function UnsettledStatValue({ amount, kind }: { amount: string; kind: 'debt' | '
     <Typography.Text type={kind === 'debt' ? 'danger' : 'success'} className={cls}>
       {formatVND(amount)}
     </Typography.Text>
+  )
+}
+
+function MemberTotalsTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ payload?: any }>
+  label?: string
+}) {
+  if (!active || !payload?.length) return null
+  const row = payload[0]?.payload as
+    | { paidNum?: number; debtNum?: number; paid?: string; debt?: string }
+    | undefined
+
+  const paid = row?.paidNum ?? 0
+  const debt = row?.debtNum ?? 0
+  const total = paid + debt
+
+  return (
+    <div className="rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5">
+      <div className="mb-1 text-sm font-semibold text-stone-900">{label}</div>
+      <div className="space-y-0.5 text-xs tabular-nums">
+        <div className="flex items-center justify-between gap-6">
+          <span className="text-stone-500">Tổng tiền</span>
+          <span className="font-semibold text-stone-900">{formatVND(String(total))}</span>
+        </div>
+        <div className="flex items-center justify-between gap-6">
+          <span className="text-stone-500">Tiền chi</span>
+          <span className="font-semibold text-[#00A32A]">{formatVND(String(paid))}</span>
+        </div>
+        <div className="flex items-center justify-between gap-6">
+          <span className="text-stone-500">Tiền nợ</span>
+          <span className="font-semibold text-[#cf1322]">{formatVND(String(debt))}</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -56,6 +114,32 @@ export default function GroupHomePage() {
   const { data: memberList } = useGroupMembers(groupId)
   const members = memberList?.members ?? []
   const { data: settlements = [] } = useSettlements(groupId)
+  const [chartDates, setChartDates] = useState<[Dayjs, Dayjs]>(defaultRange)
+
+  const {
+    data: memberTotals,
+    isLoading: memberTotalsLoading,
+    isError: memberTotalsError,
+  } = useSettlementMemberTotals(groupId, chartDates[0]?.toDate(), chartDates[1]?.toDate())
+
+  const memberTotalChartData = useMemo(() => {
+    const rows = memberTotals?.members ?? []
+    return rows.map((r) => ({
+      userId: r.userId,
+      name: r.name,
+      paid: r.paid,
+      debt: r.debt,
+      paidNum: Number.parseFloat(r.paid) || 0,
+      debtNum: Number.parseFloat(r.debt) || 0,
+      totalNum: (Number.parseFloat(r.paid) || 0) + (Number.parseFloat(r.debt) || 0),
+    }))
+  }, [memberTotals?.members])
+
+  const memberTotalChartHeight = useMemo(() => {
+    const bars = memberTotalChartData.length
+    if (bars === 0) return 260
+    return Math.min(520, Math.max(260, 44 * bars + 40))
+  }, [memberTotalChartData.length])
 
   const thisMonthFilters = useMemo(
     () => ({
@@ -116,7 +200,7 @@ export default function GroupHomePage() {
           : {}),
       },
       {
-        label: 'Đang nợ (ước tính)',
+        label: 'Nợ (ước tính)',
         value: showUnsettled ? (
           <UnsettledStatValue amount={group.myUnsettledDebt!} kind="debt" />
         ) : (
@@ -130,7 +214,7 @@ export default function GroupHomePage() {
         bg: '#fce8e8',
       },
       {
-        label: 'Được nợ (ước tính)',
+        label: 'Được nhận (ước tính)',
         value: showUnsettled ? (
           <UnsettledStatValue amount={group.myUnsettledCredit!} kind="credit" />
         ) : (
@@ -308,6 +392,74 @@ export default function GroupHomePage() {
                   <Icon icon="mdi:chevron-right" width={22} className="shrink-0 text-stone-400" />
                 </div>
               </button>
+            </Col>
+            <Col xs={24}>
+              <Card className="w-full" styles={{ body: { padding: '16px 20px' } }}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Typography.Title level={5} className="!m-0">
+                      Tổng chi theo thành viên
+                    </Typography.Title>
+                    <Typography.Text type="secondary" className="text-xs">
+                      Tổng phần chi (theo phần chia) của từng thành viên trong khoảng thời gian đã chọn.
+                    </Typography.Text>
+                  </div>
+                  <RangePicker
+                    presets={rangePresets}
+                    value={chartDates}
+                    onChange={(val) => {
+                      if (val?.[0] && val?.[1]) setChartDates([val[0], val[1]])
+                    }}
+                    disabledDate={(current) => current && current > dayjs().endOf('day')}
+                    format="DD/MM/YYYY"
+                  />
+                </div>
+
+                <div className="mt-4" style={{ height: memberTotalChartHeight }}>
+                  {memberTotalsLoading ? (
+                    <Skeleton active paragraph={{ rows: 6 }} />
+                  ) : memberTotalsError ? (
+                    <Typography.Text type="danger">Không thể tải dữ liệu biểu đồ.</Typography.Text>
+                  ) : memberTotalChartData.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <Empty description="Không có dữ liệu trong khoảng thời gian này" />
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={memberTotalChartData}
+                        layout="vertical"
+                        margin={{ top: 8, right: 16, bottom: 8, left: 24 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                        <XAxis
+                          type="number"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: '#6B7280', fontSize: 12 }}
+                          tickFormatter={(val) =>
+                            new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(Number(val))
+                          }
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={120}
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: '#334155', fontSize: 12 }}
+                        />
+                        <ReTooltip
+                          cursor={{ fill: 'rgba(2, 6, 23, 0.04)' }}
+                          content={<MemberTotalsTooltip />}
+                        />
+                        <Bar dataKey="paidNum" stackId="total" fill="#00A32A" radius={[6, 0, 0, 6]} />
+                        <Bar dataKey="debtNum" stackId="total" fill="#cf1322" radius={[0, 6, 6, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </Card>
             </Col>
           </Row>
         </>

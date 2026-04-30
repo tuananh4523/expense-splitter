@@ -12,6 +12,20 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 
+export interface SettlementMemberTotal {
+  userId: string
+  name: string
+  avatarUrl: string | null
+  paid: string
+  debt: string
+}
+
+export interface SettlementMemberTotals {
+  startDate: string
+  endDate: string
+  members: SettlementMemberTotal[]
+}
+
 export const settlementKeys = {
   all: (groupId: string) => ['settlements', groupId] as const,
   lists: (groupId: string) => [...settlementKeys.all(groupId), 'list'] as const,
@@ -19,6 +33,8 @@ export const settlementKeys = {
     [...settlementKeys.all(groupId), 'detail', settlementId] as const,
   preview: (groupId: string, periodStart: string, periodEnd: string) =>
     [...settlementKeys.all(groupId), 'preview', periodStart, periodEnd] as const,
+  memberTotals: (groupId: string, start?: string, end?: string) =>
+    [...settlementKeys.all(groupId), 'member-totals', start, end] as const,
 }
 
 export const useSettlements = (groupId: string) =>
@@ -62,6 +78,21 @@ export const useSettlementPreview = (
       Boolean(groupId) &&
       Boolean(params?.periodStart) &&
       Boolean(params?.periodEnd),
+  })
+
+export const useSettlementMemberTotals = (groupId: string, startDate?: Date, endDate?: Date) =>
+  useQuery({
+    queryKey: settlementKeys.memberTotals(groupId, startDate?.toISOString(), endDate?.toISOString()),
+    queryFn: () =>
+      api
+        .get<{ data: SettlementMemberTotals }>(`/groups/${groupId}/settlements/member-totals`, {
+          params: {
+            ...(startDate ? { startDate: startDate.toISOString() } : {}),
+            ...(endDate ? { endDate: endDate.toISOString() } : {}),
+          },
+        })
+        .then((r) => r.data.data),
+    enabled: Boolean(groupId),
   })
 
 export const useNotifySettlementPendingPayers = (groupId: string) => {

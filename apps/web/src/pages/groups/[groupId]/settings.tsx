@@ -160,29 +160,29 @@ export default function GroupSettingsPage() {
               </Typography.Text>
             </Form.Item>
             {debtReminderEnabled && (
-              <Form.Item label="Thời hạn nhắc khéo (ngày)" className="!mb-6">
-                <div className="flex items-center gap-3">
-                  <Input 
-                    type="number" 
-                    min={1} 
-                    value={debtReminderDays} 
-                    onChange={(e) => setDebtReminderDays(Number(e.target.value) || 7)}
-                    style={{ maxWidth: 120 }}
-                  />
-                  <Button 
-                    type="primary"
-                    onClick={() => {
+                <Form.Item label="Thời hạn nhắc khéo (ngày)" className="!mb-6">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={debtReminderDays}
+                      onChange={(e) => setDebtReminderDays(Number(e.target.value) || 7)}
+                      style={{ maxWidth: 120 }}
+                    />
+                    <Button
+                      type="primary"
+                      onClick={() => {
                       void update.mutateAsync({ debtReminderDays })
                         .then(() => message.success('Đã lưu thời hạn nhắc nợ'))
-                    }}
-                  >
-                    Lưu
-                  </Button>
-                </div>
-                <Typography.Text type="secondary" className="block text-sm">
-                  Gửi nhắc nhở nếu khoản chi tiêu còn nợ vượt quá số ngày cấu hình (tính từ ngày thanh toán).
-                </Typography.Text>
-              </Form.Item>
+                      }}
+                    >
+                      Lưu
+                    </Button>
+                  </div>
+                  <Typography.Text type="secondary" className="block text-sm">
+                    Gửi nhắc nhở nếu khoản chi tiêu còn nợ vượt quá số ngày cấu hình (tính từ ngày thanh toán).
+                  </Typography.Text>
+                </Form.Item>
             )}
           </Form>
         </Card>

@@ -175,7 +175,7 @@ async function toGroupDto(
   fundBalance: string | null,
   fundLowThreshold: string | null,
   viewerUserId: string,
-  extras?: { adminViewer?: boolean },
+  extras?: { adminViewer?: boolean; memberNames?: string[] },
 ): Promise<GroupDto> {
   return {
     id: group.id,
@@ -197,6 +197,7 @@ async function toGroupDto(
     fundLowThreshold,
     createdAt: group.createdAt.toISOString(),
     presetTags: group.presetTags ?? [],
+    ...(extras?.memberNames ? { memberNames: extras.memberNames } : {}),
     ...(extras?.adminViewer ? { adminViewer: true } : {}),
   }
 }
@@ -336,6 +337,19 @@ groupRoutes.get('/', async (c) => {
     },
     orderBy: { joinedAt: 'desc' },
   })
+
+  const groupIds = rows.map((r) => r.groupId)
+  const members = await prisma.groupMember.findMany({
+    where: { groupId: { in: groupIds }, ...activeMemberWhere, user: { isActive: true } },
+    select: { groupId: true, user: { select: { name: true } } },
+  })
+  const namesByGroupId = new Map<string, string[]>()
+  for (const m of members) {
+    const arr = namesByGroupId.get(m.groupId) ?? []
+    arr.push(m.user.name)
+    namesByGroupId.set(m.groupId, arr)
+  }
+
   const data: GroupDto[] = await Promise.all(
     rows.map((row) =>
       toGroupDto(
@@ -345,6 +359,7 @@ groupRoutes.get('/', async (c) => {
         row.group.fund ? fundBalanceString(row.group.fund.balance) : null,
         fundLowThresholdString(row.group.fund),
         userId,
+        { memberNames: namesByGroupId.get(row.groupId) ?? [] },
       ),
     ),
   )
